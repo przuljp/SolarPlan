@@ -5,13 +5,24 @@ from app.core.exceptions import EmailAlreadyRegisteredError, InvalidCredentialsE
 from app.core.security import create_access_token
 from app.dependencies.auth import CurrentUserDependency, SessionDependency
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.error import ErrorResponse
 from app.schemas.user import UserRead
 from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_409_CONFLICT: {
+            "model": ErrorResponse,
+            "description": "The e-mail address is already registered.",
+        }
+    },
+)
 async def register(data: RegisterRequest, session: SessionDependency) -> UserRead:
     try:
         user = await auth_service.register_user(session, data)
@@ -26,7 +37,16 @@ async def register(data: RegisterRequest, session: SessionDependency) -> UserRea
     return UserRead.model_validate(user)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorResponse,
+            "description": "The e-mail/password combination is invalid.",
+        }
+    },
+)
 async def login(data: LoginRequest, session: SessionDependency) -> TokenResponse:
     try:
         user = await auth_service.authenticate_user(session, data)
@@ -43,7 +63,16 @@ async def login(data: LoginRequest, session: SessionDependency) -> TokenResponse
     )
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorResponse,
+            "description": "A valid Bearer token is required.",
+        }
+    },
+)
 async def logout(_: CurrentUserDependency) -> Response:
     """Confirm logout after the client discards its stateless access token."""
     return Response(status_code=status.HTTP_204_NO_CONTENT)

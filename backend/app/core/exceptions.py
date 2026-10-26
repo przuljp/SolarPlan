@@ -9,3 +9,7 @@ class InvalidCredentialsError(Exception):
 class InvalidAccessTokenError(Exception):
     """Raised when an access token is malformed, expired, or otherwise invalid."""
 
+
+class ProjectNotFoundError(Exception):
+    """Raised when an owned project cannot be found."""
+
