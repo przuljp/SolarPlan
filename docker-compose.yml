@@ -22,6 +22,8 @@ services:
       SOLARPLAN_ENVIRONMENT: ${SOLARPLAN_ENVIRONMENT:-development}
       SOLARPLAN_DATABASE_URL: ${SOLARPLAN_DATABASE_URL:-postgresql+asyncpg://solarplan:solarplan_local_password@db:5432/solarplan}
       SOLARPLAN_CORS_ORIGINS: ${SOLARPLAN_CORS_ORIGINS:-["http://localhost:5173"]}
+      SOLARPLAN_JWT_SECRET: ${SOLARPLAN_JWT_SECRET:-local-development-secret-change-before-deployment}
+      SOLARPLAN_ACCESS_TOKEN_EXPIRE_MINUTES: ${SOLARPLAN_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "${BACKEND_PORT:-8000}:8000"
