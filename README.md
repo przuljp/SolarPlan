@@ -69,5 +69,3 @@ npm test
 ## Current status
 
 The initial development foundation is in place: Docker Compose, PostgreSQL, a FastAPI health endpoint, a React shell, and basic backend/frontend tests. Domain modules will be introduced incrementally according to the project roadmap.
-
-
