@@ -32,5 +32,11 @@ Thumbs.db
 uploads/
 *.log
 
+# Local Impeccable working data
+.impeccable/cache/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/review/
+
 # Private local project source material
 docs/master-specification.md

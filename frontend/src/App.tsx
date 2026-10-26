@@ -1,32 +1,38 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-function HomePage() {
-  return (
-    <main className="page-shell">
-      <section className="hero" aria-labelledby="hero-title">
-        <p className="eyebrow">Residential solar planning</p>
-        <h1 id="hero-title">Plan a solar system around your actual roof.</h1>
-        <p className="hero-copy">
-          SolarPlan will combine verified panel specifications, roof layout, PVGIS energy
-          estimates, and household consumption in one transparent analysis.
-        </p>
-        <div className="status-card">
-          <span className="status-dot" aria-hidden="true" />
-          <div>
-            <strong>Development foundation ready</strong>
-            <p>Frontend, API, database configuration, and local containers are prepared.</p>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
+import { AppShell } from "./components/AppShell";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthPage } from "./pages/AuthPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { LandingPage } from "./pages/LandingPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { ProjectDetailPage } from "./pages/ProjectDetailPage";
+import { ProjectFormPage } from "./pages/ProjectFormPage";
+import { ProjectLocationPage } from "./pages/ProjectLocationPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<AuthPage mode="login" />} />
+      <Route path="/register" element={<AuthPage mode="register" />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppShell />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/new" element={<ProjectFormPage mode="create" />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+          <Route path="/projects/:projectId/edit" element={<ProjectFormPage mode="edit" />} />
+          <Route path="/projects/:projectId/location" element={<ProjectLocationPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+      </Route>
+
+      <Route path="/404" element={<NotFoundPage />} />
+      <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
 }
-

@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T19:20:52.6075501+01:00",
+  "title": "Design System: SolarPlan",
+  "extensions": {
+    "colorMeta": {
+      "survey-ink": { "role": "secondary", "displayName": "Survey Ink", "canonical": "#153d45", "tonalRamp": ["oklch(18% .035 205)","oklch(27% .05 205)","oklch(36% .055 205)","oklch(46% .05 205)","oklch(58% .04 205)","oklch(71% .028 205)","oklch(84% .016 205)","oklch(95% .006 205)"] },
+      "survey-ink-soft": { "role": "neutral", "displayName": "Soft Survey Ink", "canonical": "#536d71", "tonalRamp": ["oklch(18% .02 205)","oklch(28% .03 205)","oklch(39% .034 205)","oklch(50% .03 205)","oklch(62% .025 205)","oklch(74% .019 205)","oklch(86% .012 205)","oklch(95% .005 205)"] },
+      "warm-paper": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#fffdf8", "tonalRamp": ["oklch(18% .012 82)","oklch(30% .018 82)","oklch(43% .022 82)","oklch(57% .024 82)","oklch(70% .021 82)","oklch(81% .016 82)","oklch(90% .011 82)","oklch(98% .008 82)"] },
+      "warm-ground": { "role": "neutral", "displayName": "Warm Mineral Ground", "canonical": "#f2f1eb", "tonalRamp": ["oklch(18% .009 92)","oklch(30% .013 92)","oklch(43% .016 92)","oklch(57% .017 92)","oklch(70% .015 92)","oklch(81% .012 92)","oklch(90% .009 92)","oklch(95% .007 92)"] },
+      "survey-line": { "role": "neutral", "displayName": "Survey Line", "canonical": "#cad6d2", "tonalRamp": ["oklch(18% .018 190)","oklch(29% .026 190)","oklch(41% .03 190)","oklch(54% .029 190)","oklch(66% .025 190)","oklch(77% .02 190)","oklch(86% .015 190)","oklch(95% .007 190)"] },
+      "survey-line-strong": { "role": "neutral", "displayName": "Strong Survey Line", "canonical": "#9db1ad", "tonalRamp": ["oklch(18% .02 190)","oklch(29% .03 190)","oklch(41% .036 190)","oklch(53% .034 190)","oklch(64% .029 190)","oklch(73% .024 190)","oklch(84% .016 190)","oklch(95% .007 190)"] },
+      "action-copper": { "role": "primary", "displayName": "Action Copper", "canonical": "#a94724", "tonalRamp": ["oklch(18% .055 40)","oklch(28% .09 40)","oklch(40% .13 40)","oklch(52% .15 40)","oklch(63% .135 40)","oklch(74% .095 40)","oklch(86% .05 40)","oklch(95% .02 40)"] },
+      "action-copper-dark": { "role": "primary", "displayName": "Deep Action Copper", "canonical": "#8c3519", "tonalRamp": ["oklch(17% .06 38)","oklch(26% .1 38)","oklch(36% .135 38)","oklch(47% .15 38)","oklch(59% .13 38)","oklch(72% .09 38)","oklch(85% .047 38)","oklch(95% .018 38)"] },
+      "survey-sun": { "role": "tertiary", "displayName": "Survey Sun", "canonical": "#e5a13b", "tonalRamp": ["oklch(18% .05 75)","oklch(29% .085 75)","oklch(42% .125 75)","oklch(56% .15 75)","oklch(69% .14 75)","oklch(80% .105 75)","oklch(89% .055 75)","oklch(96% .02 75)"] },
+      "field-teal": { "role": "secondary", "displayName": "Field Teal", "canonical": "#dfeae6", "tonalRamp": ["oklch(18% .025 175)","oklch(29% .039 175)","oklch(42% .046 175)","oklch(55% .043 175)","oklch(68% .036 175)","oklch(79% .028 175)","oklch(89% .019 175)","oklch(95% .01 175)"] },
+      "danger-red": { "role": "tertiary", "displayName": "Measured Danger Red", "canonical": "#a53c36", "tonalRamp": ["oklch(18% .045 25)","oklch(28% .08 25)","oklch(40% .115 25)","oklch(51% .135 25)","oklch(63% .115 25)","oklch(75% .08 25)","oklch(87% .042 25)","oklch(95% .016 25)"] },
+      "danger-paper": { "role": "neutral", "displayName": "Danger Paper", "canonical": "#fff9f7", "tonalRamp": ["oklch(18% .018 25)","oklch(30% .028 25)","oklch(43% .035 25)","oklch(57% .038 25)","oklch(70% .032 25)","oklch(82% .024 25)","oklch(91% .016 25)","oklch(97% .009 25)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Editorial Display", "purpose": "Short landing and authentication statements." },
+      "headline": { "displayName": "Workspace Headline", "purpose": "Page titles that orient the task." },
+      "title": { "displayName": "Panel Title", "purpose": "Compact section headings." },
+      "body": { "displayName": "Operational Body", "purpose": "Explanation and interface copy." },
+      "label": { "displayName": "Survey Label", "purpose": "Controls, status, metadata, and measurements." },
+      "technical": { "displayName": "Technical Register", "purpose": "Identifiers and machine-shaped values." }
+    },
+    "shadows": [
+      { "name": "paper-lift", "value": "0 12px 30px rgba(21, 61, 69, 0.05)", "purpose": "Quiet panel separation." },
+      { "name": "survey-lift", "value": "0 18px 45px rgba(21, 61, 69, 0.09)", "purpose": "Roof survey sheets and focused forms." },
+      { "name": "action-lift", "value": "0 8px 20px rgba(159, 69, 35, 0.2)", "purpose": "Primary actions." }
+    ],
+    "motion": [
+      { "name": "state-quick", "value": "160ms ease-out", "purpose": "Fields and compact state changes." },
+      { "name": "action-standard", "value": "180ms ease-out", "purpose": "Button transitions." },
+      { "name": "spinner", "value": "700ms linear infinite", "purpose": "Explicit pending progress." },
+      { "name": "skeleton-breathe", "value": "1.4s ease-in-out infinite alternate", "purpose": "Reserved-space loading feedback." },
+      { "name": "reduced-motion", "value": "1ms animation; 80ms color/background/border transitions", "purpose": "Removes spatial motion while preserving feedback." }
+    ],
+    "breakpoints": [{ "name": "stack", "value": "1000px" }, { "name": "mobile-shell", "value": "720px" }]
+  },
+  "components": [
+    {
+      "name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "The decisive action for starting, saving, or advancing an assessment.",
+      "html": "<button class=\"ds-btn-primary\">Create project <span aria-hidden=\"true\">→</span></button>",
+      "css": ".ds-btn-primary{display:inline-flex;min-height:3rem;gap:.65rem;align-items:center;padding:.78rem 1.15rem;border:1px solid transparent;border-radius:.5rem;color:var(--paper,#fffdf8);background:var(--accent,#a94724);box-shadow:0 8px 20px rgba(159,69,35,.2);font:750 1rem Aptos,'Segoe UI',sans-serif;cursor:pointer;transition:background 180ms ease-out,transform 180ms ease-out}.ds-btn-primary:hover{background:var(--accent-dark,#8c3519);transform:translateY(-2px)}.ds-btn-primary:focus-visible{outline:3px solid var(--ink,#153d45);outline-offset:3px;box-shadow:0 0 0 6px var(--paper,#fffdf8)}.ds-btn-primary:active{transform:none}"
+    },
+    {
+      "name": "Secondary Button", "kind": "button", "refersTo": "button-secondary", "description": "A quiet alternative for cancel, edit, and retry.",
+      "html": "<button class=\"ds-btn-secondary\">Edit details</button>",
+      "css": ".ds-btn-secondary{min-height:3rem;padding:.78rem 1.15rem;border:1px solid var(--line-strong,#9db1ad);border-radius:.5rem;color:var(--ink,#153d45);background:transparent;font:750 1rem Aptos,'Segoe UI',sans-serif;cursor:pointer;transition:background 180ms ease-out,border-color 180ms ease-out}.ds-btn-secondary:hover{border-color:var(--ink,#153d45);background:var(--paper,#fffdf8)}.ds-btn-secondary:focus-visible{outline:3px solid var(--ink,#153d45);outline-offset:3px;box-shadow:0 0 0 6px var(--paper,#fffdf8)}"
+    },
+    {
+      "name": "Labeled Text Field", "kind": "input", "refersTo": "input", "description": "A visible label, practical example, and persistent guidance.",
+      "html": "<label class=\"ds-field\">Project name<input placeholder=\"e.g. Family house Sarajevo\"><small>Use a name you will recognise.</small></label>",
+      "css": ".ds-field{display:grid;gap:.5rem;color:var(--ink,#153d45);font:750 1rem Aptos,'Segoe UI',sans-serif}.ds-field input{min-height:3.2rem;padding:.76rem .9rem;border:1px solid var(--line-strong,#9db1ad);border-radius:.42rem;color:var(--ink,#153d45);background:#fff;font:400 1rem Aptos,'Segoe UI',sans-serif;transition:border-color 160ms ease-out,box-shadow 160ms ease-out}.ds-field input:hover{border-color:#6c8584}.ds-field input:focus-visible{border-color:var(--accent,#a94724);outline:0;box-shadow:0 0 0 3px rgba(201,95,50,.16)}.ds-field small{color:var(--ink-soft,#536d71);font-size:.76rem;font-weight:500}"
+    },
+    {
+      "name": "Desktop Navigation", "kind": "nav", "description": "A deep-teal rail with conventional labels and a pale active destination.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-active\" href=\"#\">Overview</a><a href=\"#\">Projects</a><a href=\"#\">Settings</a></nav>",
+      "css": ".ds-nav{display:grid;width:220px;gap:.45rem;padding:1.2rem;background:var(--ink,#153d45);font-family:Aptos,'Segoe UI',sans-serif}.ds-nav a{padding:.8rem .9rem;border-radius:.42rem;color:#bed0cc;font-size:.92rem;font-weight:700;text-decoration:none}.ds-nav a:hover{color:#fff;background:rgba(255,255,255,.07)}.ds-nav a:focus-visible{outline:3px solid #fffdf8;outline-offset:2px}.ds-nav a.ds-active{color:var(--ink,#153d45);background:#edf1ea}"
+    },
+    {
+      "name": "Paper Panel", "kind": "card", "refersTo": "card", "description": "The square working surface for lists, registers, and forms.",
+      "html": "<section class=\"ds-panel\"><h2>Your projects</h2><p>Private workspaces for each property you assess.</p></section>",
+      "css": ".ds-panel{padding:1.7rem;border:1px solid var(--line,#cad6d2);color:var(--ink,#153d45);background:var(--paper,#fffdf8);box-shadow:0 12px 30px rgba(21,61,69,.05);font-family:Aptos,'Segoe UI',sans-serif}.ds-panel h2{margin:0;font:600 1.45rem Newsreader,Georgia,serif}.ds-panel p{margin:.35rem 0 0;color:var(--ink-soft,#536d71);font-size:.86rem}.ds-panel:hover{border-color:var(--line-strong,#9db1ad)}.ds-panel:focus-within{outline:3px solid var(--ink,#153d45);outline-offset:3px}"
+    },
+    {
+      "name": "Setup Status Badge", "kind": "chip", "refersTo": "status-badge", "description": "A compact workflow-state annotation.",
+      "html": "<span class=\"ds-status\">Setup</span>",
+      "css": ".ds-status{display:inline-flex;padding:.4rem .62rem;border:1px solid #dbb183;border-radius:99px;color:#815020;background:#fff5e4;font:800 .72rem Aptos,'Segoe UI',sans-serif}.ds-status:hover{border-color:#b87b3e}.ds-status:focus-visible{outline:3px solid var(--ink,#153d45);outline-offset:3px}"
+    },
+    {
+      "name": "Roof Survey Sheet", "kind": "custom", "description": "The signature measured-roof motif with visible dimensions and results.",
+      "html": "<section class=\"ds-survey\"><header>Roof survey preview <strong>South-east · 31°</strong></header><div class=\"ds-roof\"><i></i><i></i><i></i><i></i><b>8.4 m</b></div><footer>Estimated capacity <strong>5.4 kWp</strong></footer></section>",
+      "css": ".ds-survey{position:relative;width:420px;padding:1.6rem;border:1px solid var(--line-strong,#9db1ad);color:var(--ink,#153d45);background:#e7eee9;box-shadow:0 18px 45px rgba(21,61,69,.09);font-family:Aptos,'Segoe UI',sans-serif}.ds-survey:after{position:absolute;width:4rem;height:4rem;right:-.5rem;top:-.5rem;border-top:2px solid var(--accent,#a94724);border-right:2px solid var(--accent,#a94724);content:''}.ds-survey header{display:flex;justify-content:space-between;margin-bottom:1rem;font-size:.79rem}.ds-survey header strong{color:var(--accent-dark,#8c3519)}.ds-roof{display:grid;position:relative;min-height:180px;grid-template-columns:repeat(2,1fr);gap:.45rem;padding:2rem;border:2px solid var(--ink,#153d45);background:#b8cac4;transform:skewY(-3deg)}.ds-roof i{border:1px solid #c7d8d8;background:#244e5b}.ds-roof b{position:absolute;left:42%;bottom:-.7rem;padding:.16rem .35rem;color:var(--accent-dark,#8c3519);background:#e7eee9;font-size:.74rem}.ds-survey footer{display:flex;justify-content:space-between;margin-top:1.8rem;padding-top:1rem;border-top:1px solid var(--line-strong,#9db1ad);font-size:.82rem}.ds-survey:hover{border-color:var(--ink,#153d45)}.ds-survey:focus-within{outline:3px solid var(--ink,#153d45);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clear Energy Survey",
+    "overview": "SolarPlan combines the familiarity of a practical household workspace with the exactness of a field survey sheet. Warm paper and deep teal ink make technical choices approachable; hairlines, measured labels, tabular figures, and roof geometry ground estimates in observable inputs.\n\nNewsreader gives explanations a human editorial voice while Aptos or Segoe UI keeps controls familiar. Burnt orange is reserved for consequential actions. The skewed roof diagram is the identity-bearing move: an assessor's worksheet, never generic green-tech decoration.",
+    "keyCharacteristics": ["Warm paper on a quiet mineral ground.","Deep teal navigation and ink with strong contrast.","Editorial serif headings with practical sans-serif controls.","Fine rules, visible units, and tabular figures.","Roof-survey geometry used selectively as the signature."],
+    "rules": [
+      { "name": "The Copper Rarity Rule", "body": "Copper marks decisions and direction; never spread it across passive surfaces.", "section": "colors" },
+      { "name": "The Ink Carries Structure Rule", "body": "Use Survey Ink—not black—for type, navigation, diagram frames, and focus outlines.", "section": "colors" },
+      { "name": "The Two Voices Rule", "body": "Newsreader explains and frames; Aptos or Segoe UI operates. Never use serif for inputs, buttons, lists, or navigation.", "section": "typography" },
+      { "name": "The Units Stay Visible Rule", "body": "Keep units beside values and use tabular numerals where figures are compared.", "section": "typography" },
+      { "name": "The Survey Rhythm Rule", "body": "Major groups breathe in 1.5–2rem intervals; related labels and controls stay within 0.35–0.8rem.", "section": "layout" },
+      { "name": "The Hairline Before Shadow Rule", "body": "Borders and tonal fields define structure; elevation only supports it.", "section": "elevation" },
+      { "name": "The Square Sheet Rule", "body": "Rounded corners belong to controls, badges, and account elements—not primary containers.", "section": "shapes" },
+      { "name": "The Roof Geometry Rule", "body": "Reserve skewed rectangles, panel grids, dimension tags, and crop marks for roof or survey meaning.", "section": "shapes" }
+    ],
+    "dos": ["Do explain solar terms beside the control or result and keep units visible.","Do organize with paper, fine rules, and spacing before elevation.","Do reserve Copper for decisions, direction, and measured callouts.","Do preserve the serif/sans division between explanation and operation.","Do keep focus, loading labels, recovery, mobile login/logout, and reduced motion explicit.","Do use roof geometry as precise, content-bearing identity."],
+    "donts": ["Don't present estimates as guarantees, verified savings, or engineering approval.","Don't substitute generic green gradients or glossy solar imagery for evidence.","Don't round paper panels into soft app tiles or let shadows become the main separator.","Don't scatter Copper, Sun, or skewed geometry across passive decoration.","Don't hide labels, assumptions, units, or important metadata behind hover.","Don't squeeze the desktop roof canvas onto mobile without reflowing it."]
+  }
+}
