@@ -1,0 +1,2 @@
+"""SolarPlan backend application."""
+
