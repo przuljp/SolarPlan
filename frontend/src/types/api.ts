@@ -22,6 +22,25 @@ export type ProjectInput = {
   description?: string | null;
 };
 
+export type RoofConfigurationInput = {
+  width_m: number;
+  length_m: number;
+  tilt_deg: number;
+  azimuth_deg: number;
+  edge_margin_m: number;
+  panel_gap_m: number;
+  lat: number;
+  lon: number;
+  location_label?: string | null;
+};
+
+export type RoofConfiguration = RoofConfigurationInput & {
+  id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type LoginInput = {
   email: string;
   password: string;

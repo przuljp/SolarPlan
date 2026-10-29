@@ -22,6 +22,14 @@ def test_project_crud_routes_are_exposed_and_protected() -> None:
         assert operation["security"] == [{"HTTPBearer": []}]
 
 
+def test_roof_configuration_routes_are_exposed_and_protected() -> None:
+    operations = app.openapi()["paths"]["/api/v1/projects/{project_id}/roof"]
+
+    assert {"get", "put"}.issubset(operations)
+    assert operations["get"]["security"] == [{"HTTPBearer": []}]
+    assert operations["put"]["security"] == [{"HTTPBearer": []}]
+
+
 def test_logout_requires_bearer_authentication() -> None:
     logout_operation = app.openapi()["paths"]["/api/v1/auth/logout"]["post"]
 

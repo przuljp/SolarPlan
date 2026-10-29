@@ -91,4 +91,71 @@ describe("SolarPlan application routes", () => {
     expect(sessionStorage.getItem("solarplan.access_token")).toBe("test-token");
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
   });
+
+  test("loads, edits, and saves a roof configuration", async () => {
+    const projectId = "4b0b8808-fbcc-4f69-bff6-8f81f2dc8120";
+    const roofConfiguration = {
+      id: "6b9f3e33-17ad-4d24-94cc-fd46d3359dd9",
+      project_id: projectId,
+      width_m: 8.4,
+      length_m: 11.2,
+      tilt_deg: 32,
+      azimuth_deg: 180,
+      edge_margin_m: 0.3,
+      panel_gap_m: 0.02,
+      lat: 43.8563,
+      lon: 18.4131,
+      location_label: "Family house, Sarajevo",
+      created_at: "2026-10-29T10:00:00Z",
+      updated_at: "2026-10-29T10:00:00Z",
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "2ff4d702-c180-4084-a15a-51dc8280f466",
+            full_name: "Milan Petrovic",
+            email: "milan@example.com",
+            created_at: "2026-10-26T10:00:00Z",
+            updated_at: "2026-10-26T10:00:00Z",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(roofConfiguration), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...roofConfiguration, width_m: 9.1 }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+
+    renderApp(`/projects/${projectId}/location`);
+
+    const width = await screen.findByLabelText(/usable roof width/i);
+    expect(width).toHaveValue(8.4);
+    fireEvent.change(width, { target: { value: "9.1" } });
+    fireEvent.click(screen.getByRole("button", { name: /save roof setup/i }));
+
+    expect(
+      await screen.findByText(/location and roof measurements saved/i),
+    ).toBeInTheDocument();
+    const putCall = fetchMock.mock.calls.find(
+      ([, options]) => (options as RequestInit | undefined)?.method === "PUT",
+    );
+    expect(putCall).toBeDefined();
+    expect(JSON.parse((putCall?.[1] as RequestInit).body as string)).toMatchObject({
+      width_m: 9.1,
+      lat: 43.8563,
+      azimuth_deg: 180,
+    });
+  });
 });

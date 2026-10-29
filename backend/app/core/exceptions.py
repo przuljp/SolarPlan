@@ -13,3 +13,6 @@ class InvalidAccessTokenError(Exception):
 class ProjectNotFoundError(Exception):
     """Raised when an owned project cannot be found."""
 
+
+class RoofConfigurationNotFoundError(Exception):
+    """Raised when an owned project has no roof configuration."""

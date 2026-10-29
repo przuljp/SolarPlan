@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.roof_configuration import RoofConfiguration
     from app.models.user import User
 
 
@@ -45,4 +46,9 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     owner: Mapped[User] = relationship(back_populates="projects")
-
+    roof_configuration: Mapped[RoofConfiguration | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
+    )

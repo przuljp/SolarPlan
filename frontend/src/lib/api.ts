@@ -3,6 +3,8 @@ import type {
   Project,
   ProjectInput,
   RegisterInput,
+  RoofConfiguration,
+  RoofConfigurationInput,
   TokenResponse,
   User,
 } from "../types/api";
@@ -74,4 +76,11 @@ export const api = {
       body: JSON.stringify(input),
     }),
   deleteProject: (id: string) => request<void>(`/projects/${id}`, { method: "DELETE" }),
+  roofConfiguration: (projectId: string) =>
+    request<RoofConfiguration>(`/projects/${projectId}/roof`),
+  saveRoofConfiguration: (projectId: string, input: RoofConfigurationInput) =>
+    request<RoofConfiguration>(`/projects/${projectId}/roof`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }),
 };
