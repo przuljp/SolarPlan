@@ -257,6 +257,25 @@ input::placeholder, textarea::placeholder { color: #596b69; }
 .field-grid > * { min-width: 0; }
 .field-unit { color: var(--ink-soft); font-size: 0.75rem; font-weight: 600; }
 .technical-fields input { font-variant-numeric: tabular-nums; }
+.location-picker { display: grid; gap: 0.9rem; }
+.location-search { display: grid; gap: 0.45rem; }
+.location-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.65rem; align-items: end; }
+.location-search-row .button { min-width: 9.5rem; white-space: nowrap; }
+.location-search > small, .map-caption, .map-status { color: var(--ink-soft); line-height: 1.5; }
+.location-feedback { padding: 0.8rem 0.9rem; border: 1px solid var(--line-strong); color: var(--ink); background: #f6f3eb; line-height: 1.5; }
+.location-results { display: grid; max-height: 15rem; margin: 0; padding: 0; overflow-y: auto; border: 1px solid var(--line-strong); list-style: none; }
+.location-results li + li { border-top: 1px solid var(--line); }
+.location-results button { display: grid; width: 100%; gap: 0.25rem; padding: 0.85rem 0.95rem; border: 0; color: var(--ink); background: var(--paper); font: inherit; text-align: left; cursor: pointer; }
+.location-results button:hover { background: var(--teal-soft); }
+.location-results button:focus-visible { position: relative; z-index: 1; outline: 3px solid var(--ink); outline-offset: -3px; }
+.location-results small { color: var(--ink-soft); font-family: "Cascadia Mono", Consolas, monospace; font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+.map-shell { overflow: hidden; border: 1px solid var(--line-strong); background: #eef2ed; }
+.location-map { width: 100%; height: 360px; background: #dfeae6; }
+.location-map.leaflet-container { font-family: "Aptos", "Segoe UI", sans-serif; }
+.location-map .leaflet-control-zoom a { color: var(--ink); border-radius: 0; }
+.map-caption { margin: 0; padding: 0.75rem 0.9rem; border-top: 1px solid var(--line); background: var(--paper); font-size: 0.82rem; }
+.map-status { margin: -0.2rem 0 0; font-size: 0.82rem; }
+.leaflet-control-attribution a { color: var(--accent-dark); }
 .form-actions { display: flex; justify-content: flex-end; gap: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
 .detail-actions { display: flex; gap: 0.7rem; }
 .project-overview-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.65fr); gap: 1.5rem; align-items: start; }
@@ -264,6 +283,18 @@ input::placeholder, textarea::placeholder { color: #596b69; }
 .roof-placeholder { display: grid; min-height: 300px; margin: 1rem 0 1.4rem; place-items: center; align-content: center; border: 1px dashed var(--line-strong); background: #eef2ed; text-align: center; }
 .roof-placeholder svg { width: 3rem; margin-bottom: 1rem; color: var(--accent-dark); }
 .roof-placeholder p { max-width: 44ch; color: var(--ink-soft); line-height: 1.6; }
+.status-complete { border-color: #8eb6a1; color: #204f3b; background: #edf7f0; }
+.roof-summary { display: grid; gap: 1.25rem; margin: 1rem 0 1.4rem; padding: 1.25rem; border: 1px solid var(--line); background: #f7f8f3; }
+.roof-summary-location { display: flex; min-width: 0; gap: 0.9rem; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.roof-summary-location svg { flex: 0 0 auto; width: 2.5rem; color: var(--accent-dark); }
+.roof-summary-location div { min-width: 0; }
+.roof-summary-location strong, .roof-summary-location small { display: block; }
+.roof-summary-location strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roof-summary-location small { margin-top: 0.25rem; color: var(--ink-soft); font-family: "Cascadia Mono", Consolas, monospace; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.roof-measurements { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.roof-measurements div { min-width: 0; padding: 0.9rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.roof-measurements dt { color: var(--ink-soft); font-size: 0.75rem; }
+.roof-measurements dd { margin: 0.3rem 0 0; font-weight: 750; font-variant-numeric: tabular-nums; }
 .detail-register dl, .profile-panel dl { margin: 0; }
 .detail-register dl div, .profile-panel dl div { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
 .detail-register dt, .profile-panel dt { color: var(--ink-soft); }
@@ -327,7 +358,9 @@ input::placeholder, textarea::placeholder { color: #596b69; }
   .guide-roof { height: 120px; }
   .query-error { align-items: flex-start; flex-direction: column; }
   .project-form, .roof-form { padding: 1.2rem; }
-  .field-grid { grid-template-columns: 1fr; }
+  .field-grid, .roof-measurements { grid-template-columns: 1fr; }
+  .location-search-row { grid-template-columns: 1fr; }
+  .location-search-row .button { width: 100%; }
   .form-actions, .detail-actions { flex-direction: column-reverse; }
   .form-actions .button, .detail-actions .button { width: 100%; }
   .panel-heading { align-items: flex-start; flex-direction: column; }

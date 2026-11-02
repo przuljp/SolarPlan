@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import "@fontsource/newsreader/latin-ext-400.css";
 import "@fontsource/newsreader/latin-ext-500.css";
 import "@fontsource/newsreader/latin-ext-600.css";
+import "leaflet/dist/leaflet.css";
 
 import App from "./App";
 import { AuthProvider } from "./auth/AuthContext";

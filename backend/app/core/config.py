@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     jwt_issuer: str = "solarplan-api"
     jwt_audience: str = "solarplan-frontend"
+    geocoding_base_url: str = "https://nominatim.openstreetmap.org"
+    geocoding_user_agent: str = "SolarPlan/0.1 (https://github.com/przuljp/SolarPlan)"
+    geocoding_referer: str = "https://github.com/przuljp/SolarPlan"
+    geocoding_timeout_seconds: float = 10.0
+    geocoding_min_interval_seconds: float = 1.0
+    geocoding_cache_ttl_seconds: int = 3600
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -27,5 +33,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-
-

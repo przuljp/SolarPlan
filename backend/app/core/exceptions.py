@@ -16,3 +16,11 @@ class ProjectNotFoundError(Exception):
 
 class RoofConfigurationNotFoundError(Exception):
     """Raised when an owned project has no roof configuration."""
+
+
+class GeocodingProviderError(Exception):
+    """Raised when the configured geocoding provider cannot return a valid response."""
+
+
+class GeocodingResultNotFoundError(Exception):
+    """Raised when reverse geocoding cannot describe the requested coordinates."""

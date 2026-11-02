@@ -41,6 +41,14 @@ export type RoofConfiguration = RoofConfigurationInput & {
   updated_at: string;
 };
 
+export type GeocodingResult = {
+  display_name: string;
+  latitude: number;
+  longitude: number;
+  category: string | null;
+  type: string | null;
+};
+
 export type LoginInput = {
   email: string;
   password: string;

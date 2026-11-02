@@ -30,6 +30,16 @@ def test_roof_configuration_routes_are_exposed_and_protected() -> None:
     assert operations["put"]["security"] == [{"HTTPBearer": []}]
 
 
+def test_geocoding_routes_are_exposed_and_protected() -> None:
+    paths = app.openapi()["paths"]
+    search = paths["/api/v1/geocoding/search"]["get"]
+    reverse = paths["/api/v1/geocoding/reverse"]["get"]
+
+    assert search["security"] == [{"HTTPBearer": []}]
+    assert reverse["security"] == [{"HTTPBearer": []}]
+    assert "503" in search["responses"]
+
+
 def test_logout_requires_bearer_authentication() -> None:
     logout_operation = app.openapi()["paths"]["/api/v1/auth/logout"]["post"]
 

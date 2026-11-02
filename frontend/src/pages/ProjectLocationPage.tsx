@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ArrowIcon } from "../components/Icons";
+import { LocationPicker } from "../components/LocationPicker";
 import { api, ApiError } from "../lib/api";
 import type { RoofConfiguration, RoofConfigurationInput } from "../types/api";
 
@@ -157,8 +158,8 @@ export function ProjectLocationPage() {
 
       <form className="roof-form" onSubmit={submit}>
         <div className="form-note">
-          <strong>Manual coordinates for now</strong>
-          <p>The map will be added next. Until then, enter latitude and longitude in decimal degrees.</p>
+          <strong>Coordinates remain the source of truth</strong>
+          <p>Search, click the map, or enter coordinates manually. Review the point before saving it with the roof measurements.</p>
         </div>
         {error && <div className="form-error" role="alert">{error}</div>}
         {savedMessage && <div className="form-success" role="status">{savedMessage}</div>}
@@ -166,6 +167,20 @@ export function ProjectLocationPage() {
         <fieldset className="form-section">
           <legend>Property location</legend>
           <p className="section-copy">Coordinates identify the calculation point. The label is only a readable description.</p>
+          <LocationPicker
+            latitude={form.lat}
+            longitude={form.lon}
+            onLocationChange={(latitude, longitude, label) => {
+              setForm((current) => ({
+                ...current,
+                lat: String(latitude),
+                lon: String(longitude),
+                location_label: label ?? current.location_label,
+              }));
+              setError("");
+              setSavedMessage("");
+            }}
+          />
           <label>
             Location label <span className="optional">Optional</span>
             <input

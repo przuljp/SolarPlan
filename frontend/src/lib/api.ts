@@ -1,4 +1,5 @@
 import type {
+  GeocodingResult,
   LoginInput,
   Project,
   ProjectInput,
@@ -83,4 +84,12 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(input),
     }),
+  searchLocations: (query: string) =>
+    request<GeocodingResult[]>(
+      `/geocoding/search?${new URLSearchParams({ q: query })}`,
+    ),
+  reverseLocation: (latitude: number, longitude: number) =>
+    request<GeocodingResult>(
+      `/geocoding/reverse?${new URLSearchParams({ lat: String(latitude), lon: String(longitude) })}`,
+    ),
 };
