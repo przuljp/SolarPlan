@@ -24,3 +24,27 @@ class GeocodingProviderError(Exception):
 
 class GeocodingResultNotFoundError(Exception):
     """Raised when reverse geocoding cannot describe the requested coordinates."""
+
+
+class SolarPanelNotFoundError(Exception):
+    """Raised when a catalog panel cannot be found."""
+
+
+class PanelLayoutNotFoundError(Exception):
+    """Raised when a project has no saved panel layout."""
+
+
+class InvalidPanelCountError(Exception):
+    """Raised when a requested count exceeds the calculated capacity."""
+
+
+class ProjectLocationNotFoundError(Exception):
+    """Raised when an owned project has no saved geographic location."""
+
+
+class RoofSurfaceNotFoundError(Exception):
+    """Raised when a roof surface does not belong to the owned project."""
+
+
+class ProjectPanelMismatchError(Exception):
+    """Raised when a roof surface attempts to use a different project panel model."""

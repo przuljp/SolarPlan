@@ -33,6 +33,8 @@ The private master specification is intentionally excluded from Git.
 4. Open the backend documentation at <http://localhost:8000/docs>.
 
 PostgreSQL is exposed on port `5432`, the API on `8000`, and the frontend development server on `5173`.
+The backend runs `alembic upgrade head` before starting, so new database tables and verified catalog records are applied automatically when the stack starts.
+
 
 Stop the stack with `docker compose down`. To also remove the local database volume, run `docker compose down -v`.
 

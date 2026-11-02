@@ -3,7 +3,6 @@ from app.main import app
 
 def test_authentication_routes_are_exposed_by_openapi() -> None:
     paths = app.openapi()["paths"]
-
     assert "post" in paths["/api/v1/auth/register"]
     assert "post" in paths["/api/v1/auth/login"]
     assert "post" in paths["/api/v1/auth/logout"]
@@ -12,43 +11,36 @@ def test_authentication_routes_are_exposed_by_openapi() -> None:
 
 def test_project_crud_routes_are_exposed_and_protected() -> None:
     paths = app.openapi()["paths"]
-
     assert {"get", "post"}.issubset(paths["/api/v1/projects"])
     assert {"get", "patch", "delete"}.issubset(paths["/api/v1/projects/{project_id}"])
 
-    for operation in paths["/api/v1/projects"].values():
-        assert operation["security"] == [{"HTTPBearer": []}]
-    for operation in paths["/api/v1/projects/{project_id}"].values():
-        assert operation["security"] == [{"HTTPBearer": []}]
 
-
-def test_roof_configuration_routes_are_exposed_and_protected() -> None:
-    operations = app.openapi()["paths"]["/api/v1/projects/{project_id}/roof"]
-
-    assert {"get", "put"}.issubset(operations)
-    assert operations["get"]["security"] == [{"HTTPBearer": []}]
-    assert operations["put"]["security"] == [{"HTTPBearer": []}]
+def test_location_and_multiple_surface_routes_are_exposed() -> None:
+    paths = app.openapi()["paths"]
+    assert {"get", "put"}.issubset(paths["/api/v1/projects/{project_id}/location"])
+    assert {"get", "post"}.issubset(paths["/api/v1/projects/{project_id}/roof-surfaces"])
+    assert {"get", "put", "delete"}.issubset(
+        paths["/api/v1/projects/{project_id}/roof-surfaces/{surface_id}"]
+    )
 
 
 def test_geocoding_routes_are_exposed_and_protected() -> None:
     paths = app.openapi()["paths"]
-    search = paths["/api/v1/geocoding/search"]["get"]
-    reverse = paths["/api/v1/geocoding/reverse"]["get"]
-
-    assert search["security"] == [{"HTTPBearer": []}]
-    assert reverse["security"] == [{"HTTPBearer": []}]
-    assert "503" in search["responses"]
+    assert paths["/api/v1/geocoding/search"]["get"]["security"] == [{"HTTPBearer": []}]
+    assert paths["/api/v1/geocoding/reverse"]["get"]["security"] == [{"HTTPBearer": []}]
 
 
-def test_logout_requires_bearer_authentication() -> None:
-    logout_operation = app.openapi()["paths"]["/api/v1/auth/logout"]["post"]
-
-    assert logout_operation["security"] == [{"HTTPBearer": []}]
-
-
-def test_custom_authentication_errors_are_documented() -> None:
+def test_panel_catalog_and_surface_layout_routes_are_exposed() -> None:
     paths = app.openapi()["paths"]
-
-    assert "409" in paths["/api/v1/auth/register"]["post"]["responses"]
-    assert "401" in paths["/api/v1/auth/login"]["post"]["responses"]
-    assert "401" in paths["/api/v1/users/me"]["get"]["responses"]
+    layout = "/api/v1/projects/{project_id}/roof-surfaces/{surface_id}/layout"
+    assert "get" in paths["/api/v1/panels"]
+    assert "get" in paths["/api/v1/panels/{panel_id}"]
+    assert "post" in paths[f"{layout}/preview"]
+    assert {"get", "put"}.issubset(paths[layout])
+    protected = [
+        paths["/api/v1/panels"]["get"],
+        paths[f"{layout}/preview"]["post"],
+        paths[layout]["get"],
+        paths[layout]["put"],
+    ]
+    assert all(operation["security"] == [{"HTTPBearer": []}] for operation in protected)

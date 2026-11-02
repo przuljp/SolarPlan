@@ -36,6 +36,7 @@ uploads/
 .impeccable/cache/
 .impeccable/mocks/
 .impeccable/questions/
+.impeccable-cache/
 .impeccable/review/
 
 # Private local project source material
