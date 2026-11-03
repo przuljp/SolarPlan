@@ -103,3 +103,26 @@ export type ConsumptionProfile = ConsumptionProfileInput & {
   created_at: string;
   updated_at: string;
 };
+
+export type MonthlyEnergyComparison = {
+  month: number;
+  production_kwh: number;
+  consumption_kwh: number | null;
+  balance_kwh: number | null;
+  status: "surplus" | "deficit" | "balanced" | "unavailable";
+};
+export type EnergyComparison = {
+  project_id: string;
+  simulation_id: string;
+  consumption_profile_id: string;
+  annual_production_kwh: number;
+  annual_consumption_kwh: number | null;
+  annual_balance_kwh: number | null;
+  annual_coverage_ratio_percent: number | null;
+  consumption_profile_kind: "annual_only" | "partial_monthly" | "complete_monthly";
+  known_months: number;
+  months_with_surplus: number;
+  months_with_deficit: number;
+  months_balanced: number;
+  monthly_comparison: MonthlyEnergyComparison[];
+};

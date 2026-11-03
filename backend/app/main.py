@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers.auth import router as auth_router
 from app.routers.consumption import router as consumption_router
+from app.routers.energy_comparisons import router as energy_comparisons_router
 from app.routers.energy_simulations import router as energy_simulations_router
 from app.routers.geocoding import router as geocoding_router
 from app.routers.health import router as health_router
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
         geocoding_router,
         users_router,
         consumption_router,
+        energy_comparisons_router,
         energy_simulations_router,
         projects_router,
         project_locations_router,

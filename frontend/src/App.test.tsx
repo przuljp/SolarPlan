@@ -62,6 +62,29 @@ describe("SolarPlan application routes", () => {
     expect(screen.getByText(/12 panels · 5.22 kWp total/i)).toBeInTheDocument();
   });
 
+  test("keeps roof management available when a project is ready for analysis", async () => {
+    const project = { id: "p1", name: "Family house", description: null, status: "analyzed", created_at: "", updated_at: "" };
+    const location = { id: "loc1", project_id: "p1", lat: 43.8563, lon: 18.4131, location_label: "Sarajevo", created_at: "", updated_at: "" };
+    const panel = { id: "panel1", manufacturer: "LONGi", model_sku: "LR5-54HTH-435M", power_wp: 435 };
+    const layout = { id: "l1", project_id: "p1", roof_surface_id: "s1", solar_panel_id: "panel1", solar_panel: panel, panel_count: 12, installed_kwp: 5.22 };
+    const surfaces = [{ id: "s1", project_id: "p1", name: "South roof", shape_type: "rectangle", bottom_width_m: 8, top_width_m: 8, top_offset_m: 0, length_m: 6, tilt_deg: 30, azimuth_deg: 180, edge_margin_m: .3, panel_gap_m: .02, panel_layout: layout, created_at: "", updated_at: "" }];
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/users/me")) return Promise.resolve(json(user));
+      if (url.endsWith("/projects/p1/location")) return Promise.resolve(json(location));
+      if (url.endsWith("/projects/p1/roof-surfaces")) return Promise.resolve(json(surfaces));
+      if (url.endsWith("/projects/p1")) return Promise.resolve(json(project));
+      return Promise.resolve(new Response(null, { status: 404 }));
+    }));
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+
+    renderApp("/projects/p1");
+
+    expect(await screen.findByRole("heading", { name: "Family house" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /manage roof surfaces/i })).toHaveAttribute("href", "/projects/p1/roof-surfaces");
+    expect(screen.getByRole("link", { name: /view production analysis/i })).toHaveAttribute("href", "/projects/p1/analysis");
+  });
+
   test("runs and displays a complete production analysis", async () => {
     const monthly_results = Array.from({ length: 12 }, (_, index) => ({ month: index + 1, energy_kwh: 1000 + index * 25 }));
     const simulation = {

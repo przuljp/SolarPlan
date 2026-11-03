@@ -1,5 +1,5 @@
 import type {
-  ConsumptionProfile, ConsumptionProfileInput, EnergySimulation, EnergySimulationInput, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, PanelLayout,
+  ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, PanelLayout,
   Project, ProjectInput, ProjectLocation, ProjectLocationInput, RegisterInput,
   RoofSurface, RoofSurfaceInput, SolarPanel, TokenResponse, User,
 } from "../types/api";
@@ -63,4 +63,5 @@ export const api = {
   runEnergySimulation: (projectId: string, input: EnergySimulationInput) => request<EnergySimulation>(`/projects/${projectId}/simulations`, { method: "POST", body: JSON.stringify(input) }),
   consumptionProfile: (projectId: string) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`),
   saveConsumptionProfile: (projectId: string, input: ConsumptionProfileInput) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`, { method: "PUT", body: JSON.stringify(input) }),
+  energyComparison: (projectId: string) => request<EnergyComparison>(`/projects/${projectId}/energy-comparison`),
 };
