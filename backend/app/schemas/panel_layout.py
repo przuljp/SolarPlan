@@ -13,6 +13,11 @@ class LayoutRequest(BaseModel):
     panel_count: int | None = Field(default=None, ge=0)
 
 
+class PolygonPoint(BaseModel):
+    x_m: float
+    y_m: float
+
+
 class PanelPosition(BaseModel):
     index: int
     row: int
@@ -36,10 +41,15 @@ class LayoutPreview(BaseModel):
     utilization_percent: float
     panel_width_m: float
     panel_length_m: float
-    roof_width_m: float
+    roof_shape_type: Literal["rectangle", "trapezoid"]
+    roof_bottom_width_m: float
+    roof_top_width_m: float
+    roof_top_offset_m: float
     roof_length_m: float
     edge_margin_m: float
     panel_gap_m: float
+    roof_polygon: list[PolygonPoint]
+    usable_polygon: list[PolygonPoint]
     positions: list[PanelPosition]
 
 

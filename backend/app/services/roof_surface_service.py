@@ -8,6 +8,16 @@ from app.repositories import roof_surface_repository
 from app.schemas.roof_surface import RoofSurfaceInput
 from app.services import project_service
 
+GEOMETRY_FIELDS = {
+    "shape_type",
+    "bottom_width_m",
+    "top_width_m",
+    "top_offset_m",
+    "length_m",
+    "edge_margin_m",
+    "panel_gap_m",
+}
+
 
 async def list_surfaces(
     session: AsyncSession, project_id: UUID, owner_id: UUID
@@ -45,8 +55,14 @@ async def update_surface(
     data: RoofSurfaceInput,
 ) -> RoofSurface:
     surface = await get_surface(session, project_id, surface_id, owner_id)
-    for field, value in data.model_dump().items():
+    values = data.model_dump()
+    geometry_changed = any(
+        getattr(surface, field) != values[field] for field in GEOMETRY_FIELDS
+    )
+    for field, value in values.items():
         setattr(surface, field, value)
+    if geometry_changed and surface.panel_layout is not None:
+        surface.panel_layout = None
     await session.commit()
     await session.refresh(surface)
     return surface

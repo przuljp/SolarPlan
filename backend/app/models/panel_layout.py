@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class PanelLayout(UUIDPrimaryKeyMixin, TimestampMixin, Base):
-    """Saved module choice and rectangular placement for a project roof."""
+    """Saved module choice and polygon-aware placement for one roof surface."""
 
     __tablename__ = "panel_layouts"
     __table_args__ = (

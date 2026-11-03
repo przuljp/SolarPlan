@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { api } from "../lib/api";
-import type { PanelOrientation } from "../types/api";
+import type { PanelOrientation, PolygonPoint } from "../types/api";
+
+const points = (items: PolygonPoint[], scale: number) => items
+  .map((point) => `${point.x_m * scale},${point.y_m * scale}`)
+  .join(" ");
 
 export function PanelLayoutPage() {
   const { projectId, surfaceId } = useParams();
@@ -15,12 +19,12 @@ export function PanelLayoutPage() {
   const [panelCount, setPanelCount] = useState<number | null>(null);
 
   const preview = useQuery({
-    queryKey: ["layout-preview", projectId, panelId, orientation],
+    queryKey: ["layout-preview", projectId, surfaceId, panelId, orientation],
     queryFn: () => api.previewLayout(projectId!, surfaceId!, {
       solar_panel_id: panelId!,
       orientation,
     }),
-    enabled: Boolean(projectId && panelId),
+    enabled: Boolean(projectId && surfaceId && panelId),
   });
 
   const effectiveCount = Math.max(0, Math.min(
@@ -48,11 +52,17 @@ export function PanelLayoutPage() {
   const layout = preview.data;
   const positions = layout.positions.slice(0, effectiveCount);
   const scale = 100;
-  const svgWidth = layout.roof_width_m * scale;
+  const svgWidth = layout.roof_bottom_width_m * scale;
   const svgHeight = layout.roof_length_m * scale;
   const installedKwp = effectiveCount * layout.solar_panel.power_wp / 1000;
   const occupiedArea = effectiveCount * layout.solar_panel.width_mm * layout.solar_panel.length_mm / 1_000_000;
   const utilization = layout.usable_roof_area_m2 ? occupiedArea / layout.usable_roof_area_m2 * 100 : 0;
+  const dimensions = layout.roof_shape_type === "trapezoid"
+    ? `${layout.roof_top_width_m} m top · ${layout.roof_bottom_width_m} m bottom · ${layout.roof_length_m} m length`
+    : `${layout.roof_bottom_width_m} × ${layout.roof_length_m} m`;
+  const capacityDetail = layout.roof_shape_type === "trapezoid"
+    ? `${layout.rows} fitted rows; capacity varies by row.`
+    : `${layout.rows} rows × ${layout.columns} columns.`;
 
   return (
     <main className="workspace-page">
@@ -60,7 +70,7 @@ export function PanelLayoutPage() {
       <header className="workspace-heading">
         <div>
           <h1>Fit the panel array</h1>
-          <p>The calculation uses the saved roof dimensions, edge margin and panel gap. You can install fewer panels than the geometric maximum.</p>
+          <p>The calculation checks every panel against the inset roof boundary, including sloped trapezoid edges.</p>
         </div>
       </header>
 
@@ -68,20 +78,14 @@ export function PanelLayoutPage() {
         <section className="content-panel layout-sheet">
           <div className="layout-sheet-heading">
             <div><small>{layout.solar_panel.manufacturer}</small><h2>{layout.solar_panel.model_sku}</h2></div>
-            <span>{layout.roof_width_m} × {layout.roof_length_m} m roof</span>
+            <span>{dimensions}</span>
           </div>
           {layout.maximum_panel_count === 0 ? (
             <div className="layout-empty"><strong>This module does not fit.</strong><p>Try landscape orientation, reduce the saved roof margin, or choose a smaller panel.</p></div>
           ) : (
-            <svg className="roof-layout-svg" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img" aria-label={`Roof layout with ${effectiveCount} panels`}>
-              <rect className="roof-svg-plane" x="1" y="1" width={svgWidth - 2} height={svgHeight - 2} />
-              <rect
-                className="roof-svg-usable"
-                x={layout.edge_margin_m * scale}
-                y={layout.edge_margin_m * scale}
-                width={(layout.roof_width_m - 2 * layout.edge_margin_m) * scale}
-                height={(layout.roof_length_m - 2 * layout.edge_margin_m) * scale}
-              />
+            <svg className="roof-layout-svg" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img" aria-label={`${layout.roof_shape_type} roof layout with ${effectiveCount} panels`}>
+              <polygon className="roof-svg-plane" points={points(layout.roof_polygon, scale)} />
+              <polygon className="roof-svg-usable" points={points(layout.usable_polygon, scale)} />
               {positions.map((position) => (
                 <g key={position.index}>
                   <rect
@@ -114,7 +118,7 @@ export function PanelLayoutPage() {
           </fieldset>
           <label>Installed panel count
             <input type="number" min="0" max={layout.maximum_panel_count} value={effectiveCount} onChange={(event) => setPanelCount(Number(event.target.value))} />
-            <small>Calculated maximum: {layout.maximum_panel_count} panels ({layout.rows} rows × {layout.columns} columns).</small>
+            <small>Calculated maximum: {layout.maximum_panel_count} panels. {capacityDetail}</small>
           </label>
 
           <dl className="layout-metrics">

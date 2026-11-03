@@ -8,6 +8,7 @@ from app.models import (
     ProjectLocation,
     ProjectStatus,
     RoofSurface,
+    RoofSurfaceShape,
     SolarPanel,
     User,
 )
@@ -43,11 +44,15 @@ def test_location_is_unique_per_project() -> None:
     assert key.ondelete == "CASCADE"
 
 
-def test_roof_surface_belongs_to_project() -> None:
+def test_roof_surface_belongs_to_project_and_stores_polygon_dimensions() -> None:
     project_id = RoofSurface.__table__.c.project_id
     key = next(iter(project_id.foreign_keys))
     assert project_id.unique is not True
     assert key.ondelete == "CASCADE"
+    assert {"shape_type", "bottom_width_m", "top_width_m", "top_offset_m"}.issubset(
+        RoofSurface.__table__.c.keys()
+    )
+    assert [shape.value for shape in RoofSurfaceShape] == ["rectangle", "trapezoid"]
 
 
 def test_panel_layout_is_unique_per_surface_and_restricts_panel_deletion() -> None:

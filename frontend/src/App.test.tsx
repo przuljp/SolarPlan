@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -27,6 +27,16 @@ describe("SolarPlan application routes", () => {
     expect(await screen.findByRole("heading", { name: /open your workspace/i })).toBeInTheDocument();
   });
 
+  test("reveals trapezoid dimensions when the shape changes", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(json(user)));
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+    renderApp("/projects/p1/roof-surfaces/new");
+    expect(await screen.findByRole("heading", { name: /add a roof surface/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/top width/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /trapezoid/i }));
+    expect(screen.getByLabelText(/top width/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/top edge offset/i)).toBeInTheDocument();
+  });
   test("shows the split project location form", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(json(user)).mockResolvedValueOnce(new Response(null, { status: 404 })));
     sessionStorage.setItem("solarplan.access_token", "test-token");
@@ -40,8 +50,8 @@ describe("SolarPlan application routes", () => {
     const panel = { id: "panel1", manufacturer: "LONGi", model_sku: "LR5-54HTH-435M", power_wp: 435 };
     const layout = { id: "l1", project_id: "p1", roof_surface_id: "s1", solar_panel_id: "panel1", solar_panel: panel, panel_count: 12, installed_kwp: 5.22 };
     const surfaces = [
-      { id: "s1", project_id: "p1", name: "South roof", width_m: 8, length_m: 6, tilt_deg: 30, azimuth_deg: 180, edge_margin_m: .3, panel_gap_m: .02, panel_layout: layout, created_at: "", updated_at: "" },
-      { id: "s2", project_id: "p1", name: "West roof", width_m: 5, length_m: 4, tilt_deg: 28, azimuth_deg: 270, edge_margin_m: .3, panel_gap_m: .02, panel_layout: null, created_at: "", updated_at: "" },
+      { id: "s1", project_id: "p1", name: "South roof", shape_type: "rectangle", bottom_width_m: 8, top_width_m: 8, top_offset_m: 0, length_m: 6, tilt_deg: 30, azimuth_deg: 180, edge_margin_m: .3, panel_gap_m: .02, panel_layout: layout, created_at: "", updated_at: "" },
+      { id: "s2", project_id: "p1", name: "West roof", shape_type: "trapezoid", bottom_width_m: 5, top_width_m: 3, top_offset_m: 1, length_m: 4, tilt_deg: 28, azimuth_deg: 270, edge_margin_m: .3, panel_gap_m: .02, panel_layout: null, created_at: "", updated_at: "" },
     ];
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(json(user)).mockResolvedValueOnce(json(surfaces)));
     sessionStorage.setItem("solarplan.access_token", "test-token");

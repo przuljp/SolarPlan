@@ -102,7 +102,9 @@ def upgrade() -> None:
 
     op.execute(
         sa.text("""
-        INSERT INTO project_locations (id, project_id, lat, lon, location_label, created_at, updated_at)
+        INSERT INTO project_locations (
+            id, project_id, lat, lon, location_label, created_at, updated_at
+        )
         SELECT project_id, project_id, lat, lon, location_label, created_at, updated_at
         FROM roof_configurations
     """)

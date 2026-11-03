@@ -86,12 +86,11 @@ async def save_layout(
 
 
 def saved_layout_response(layout: PanelLayout, surface) -> dict:
-    panel_width = layout.solar_panel.width_mm / 1000
-    panel_length = layout.solar_panel.length_mm / 1000
-    if layout.orientation == "landscape":
-        panel_width, panel_length = panel_length, panel_width
-    usable_area = (surface.width_m - 2 * surface.edge_margin_m) * (
-        surface.length_m - 2 * surface.edge_margin_m
+    calculation = layout_engine.calculate_layout(
+        surface,
+        layout.solar_panel,
+        layout.orientation,
+        layout.panel_count,
     )
     return {
         "id": layout.id,
@@ -99,22 +98,7 @@ def saved_layout_response(layout: PanelLayout, surface) -> dict:
         "roof_surface_id": layout.roof_surface_id,
         "solar_panel_id": layout.solar_panel_id,
         "solar_panel": layout.solar_panel,
-        "orientation": layout.orientation,
-        "rows": layout.rows,
-        "columns": layout.columns,
-        "maximum_panel_count": layout.rows * layout.columns,
-        "panel_count": layout.panel_count,
-        "installed_kwp": layout.installed_kwp,
-        "occupied_area_m2": layout.occupied_area_m2,
-        "usable_roof_area_m2": round(usable_area, 3),
-        "utilization_percent": layout.utilization_percent,
-        "panel_width_m": round(panel_width, 4),
-        "panel_length_m": round(panel_length, 4),
-        "roof_width_m": surface.width_m,
-        "roof_length_m": surface.length_m,
-        "edge_margin_m": surface.edge_margin_m,
-        "panel_gap_m": surface.panel_gap_m,
-        "positions": layout.layout_json,
+        **calculation,
         "created_at": layout.created_at,
         "updated_at": layout.updated_at,
     }
