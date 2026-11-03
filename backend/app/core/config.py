@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     geocoding_timeout_seconds: float = 10.0
     geocoding_min_interval_seconds: float = 1.0
     geocoding_cache_ttl_seconds: int = 3600
+    pvgis_base_url: str = "https://re.jrc.ec.europa.eu/api/v5_3"
+    pvgis_version: str = "5.3"
+    pvgis_timeout_seconds: float = 20.0
+    pvgis_max_retries: int = 2
+    pvgis_retry_backoff_seconds: float = 0.5
+    pvgis_default_system_loss_percent: float = 14.0
 
     model_config = SettingsConfigDict(
         env_file=".env",

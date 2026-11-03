@@ -22,11 +22,13 @@ export function RoofSurfacesPage() {
   const totalPanels = (surfaces.data ?? []).reduce((sum, item) => sum + (item.panel_layout?.panel_count ?? 0), 0);
   const totalKwp = (surfaces.data ?? []).reduce((sum, item) => sum + (item.panel_layout?.installed_kwp ?? 0), 0);
   const sharedPanel = (surfaces.data ?? []).find((item) => item.panel_layout)?.panel_layout?.solar_panel;
+  const analysisReady = Boolean(surfaces.data?.length) && surfaces.data!.every((item) => item.panel_layout);
   return <main className="workspace-page roof-surfaces-page">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
     <header className="project-detail-heading"><div><h1>Roof surfaces</h1><p>Add every usable side of the roof. Each surface can be rectangular or trapezoidal, while the panel model stays common.</p></div><Link className="button button-primary" to={`/projects/${projectId}/roof-surfaces/new`}>Add roof surface <ArrowIcon /></Link></header>
     {search.get("saved") && <div className="form-success" role="status">Panel layout saved. The project overview below is now up to date.</div>}
     <section className="content-panel roof-portfolio-summary"><strong>{(surfaces.data ?? []).length} roof surfaces</strong><span>{totalPanels} panels · {totalKwp.toFixed(2)} kWp total</span>{sharedPanel && <small>Shared module: {sharedPanel.manufacturer} {sharedPanel.model_sku}</small>}</section>
+    {analysisReady && <section className="analysis-next-step"><div><strong>Your complete roof model is ready.</strong><span>Estimate annual and monthly production for all saved surfaces together.</span></div><Link className="button button-primary" to={`/projects/${projectId}/analysis`}>Open production analysis <ArrowIcon /></Link></section>}
     <div className="roof-surface-grid">
       {(surfaces.data ?? []).map((surface) => <article className="content-panel roof-surface-card" key={surface.id}>
         <div className="panel-heading"><div><RoofIcon /><h2>{surface.name}</h2></div><span className={`status-badge ${surface.panel_layout ? "status-complete" : ""}`}>{surface.panel_layout ? "Layout saved" : "Needs layout"}</span></div>

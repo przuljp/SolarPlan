@@ -44,3 +44,12 @@ def test_panel_catalog_and_surface_layout_routes_are_exposed() -> None:
         paths[layout]["put"],
     ]
     assert all(operation["security"] == [{"HTTPBearer": []}] for operation in protected)
+
+
+def test_energy_simulation_routes_are_exposed_and_protected() -> None:
+    paths = app.openapi()["paths"]
+    simulations = "/api/v1/projects/{project_id}/simulations"
+    assert "post" in paths[simulations]
+    assert "get" in paths[f"{simulations}/latest"]
+    assert paths[simulations]["post"]["security"] == [{"HTTPBearer": []}]
+    assert paths[f"{simulations}/latest"]["get"]["security"] == [{"HTTPBearer": []}]

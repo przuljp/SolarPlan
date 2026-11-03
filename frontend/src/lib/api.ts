@@ -1,5 +1,5 @@
 import type {
-  GeocodingResult, LoginInput, LayoutInput, LayoutPreview, PanelLayout,
+  ConsumptionProfile, ConsumptionProfileInput, EnergySimulation, EnergySimulationInput, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, PanelLayout,
   Project, ProjectInput, ProjectLocation, ProjectLocationInput, RegisterInput,
   RoofSurface, RoofSurfaceInput, SolarPanel, TokenResponse, User,
 } from "../types/api";
@@ -59,4 +59,8 @@ export const api = {
   savePanelLayout: (projectId: string, surfaceId: string, input: LayoutInput) => request<PanelLayout>(`/projects/${projectId}/roof-surfaces/${surfaceId}/layout`, { method: "PUT", body: JSON.stringify(input) }),
   searchLocations: (query: string) => request<GeocodingResult[]>(`/geocoding/search?${new URLSearchParams({ q: query })}`),
   reverseLocation: (latitude: number, longitude: number) => request<GeocodingResult>(`/geocoding/reverse?${new URLSearchParams({ lat: String(latitude), lon: String(longitude) })}`),
+  latestEnergySimulation: (projectId: string) => request<EnergySimulation>(`/projects/${projectId}/simulations/latest`),
+  runEnergySimulation: (projectId: string, input: EnergySimulationInput) => request<EnergySimulation>(`/projects/${projectId}/simulations`, { method: "POST", body: JSON.stringify(input) }),
+  consumptionProfile: (projectId: string) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`),
+  saveConsumptionProfile: (projectId: string, input: ConsumptionProfileInput) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`, { method: "PUT", body: JSON.stringify(input) }),
 };

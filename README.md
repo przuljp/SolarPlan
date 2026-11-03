@@ -2,7 +2,7 @@
 
 SolarPlan is a full-stack web application for preliminary analysis and comparison of residential photovoltaic system configurations.
 
-The application will combine verified solar-module specifications, deterministic rectangular roof-layout optimization, PVGIS energy estimates, weather context, and household electricity consumption. V1 focuses on transparent technical and energy analysis; pricing, financial savings, and ROI are explicitly outside its scope.
+The application will combine verified solar-module specifications, deterministic polygon-aware roof-layout optimization, PVGIS energy estimates, weather context, and household electricity consumption. V1 focuses on transparent technical and energy analysis; pricing, financial savings, and ROI are explicitly outside its scope.
 
 ## Technology stack
 
@@ -34,6 +34,8 @@ The private master specification is intentionally excluded from Git.
 
 PostgreSQL is exposed on port `5432`, the API on `8000`, and the frontend development server on `5173`.
 The backend runs `alembic upgrade head` before starting, so new database tables and verified catalog records are applied automatically when the stack starts.
+
+PVGIS uses the European Commission public API and does not require an API key. The backend calls the versioned endpoint and handles normalization, retry, and caching.
 
 
 Stop the stack with `docker compose down`. To also remove the local database volume, run `docker compose down -v`.
@@ -70,5 +72,5 @@ npm test
 
 ## Current status
 
-The initial development foundation is in place: Docker Compose, PostgreSQL, a FastAPI health endpoint, a React shell, and basic backend/frontend tests. Domain modules will be introduced incrementally according to the project roadmap.
+The authenticated project workflow, map-based location selection, multi-surface rectangular/trapezoidal roof modeling, verified panel catalog, polygon-aware layout engine, and PVGIS backend simulation foundation are in place. The next increment adds the production-analysis frontend and household consumption comparison.
 

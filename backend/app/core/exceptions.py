@@ -48,3 +48,23 @@ class RoofSurfaceNotFoundError(Exception):
 
 class ProjectPanelMismatchError(Exception):
     """Raised when a roof surface attempts to use a different project panel model."""
+
+
+class PvgisUnavailableError(Exception):
+    """Raised when PVGIS cannot complete a request after limited retries."""
+
+
+class PvgisInvalidResponseError(Exception):
+    """Raised when PVGIS returns data that cannot be normalized safely."""
+
+
+class SimulationInputsIncompleteError(Exception):
+    """Raised when a project lacks inputs required for an energy simulation."""
+
+
+class EnergySimulationNotFoundError(Exception):
+    """Raised when a project has no saved energy simulation."""
+
+
+class ConsumptionProfileNotFoundError(Exception):
+    """Raised when a project has no saved household-consumption profile."""

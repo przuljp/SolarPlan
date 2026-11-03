@@ -3,11 +3,13 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthPage } from "./pages/AuthPage";
+import { ConsumptionPage } from "./pages/ConsumptionPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LandingPage } from "./pages/LandingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PanelLayoutPage } from "./pages/PanelLayoutPage";
 import { PanelSelectionPage } from "./pages/PanelSelectionPage";
+import { ProductionAnalysisPage } from "./pages/ProductionAnalysisPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProjectFormPage } from "./pages/ProjectFormPage";
 import { ProjectLocationPage } from "./pages/ProjectLocationPage";
@@ -33,6 +35,8 @@ export default function App() {
       <Route path="/projects/:projectId/roof-surfaces/:surfaceId/edit" element={<RoofSurfaceFormPage />} />
       <Route path="/projects/:projectId/roof-surfaces/:surfaceId/panels" element={<PanelSelectionPage />} />
       <Route path="/projects/:projectId/roof-surfaces/:surfaceId/layout" element={<PanelLayoutPage />} />
+      <Route path="/projects/:projectId/analysis" element={<ProductionAnalysisPage />} />
+      <Route path="/projects/:projectId/consumption" element={<ConsumptionPage />} />
       <Route path="/settings" element={<SettingsPage />} />
     </Route></Route>
     <Route path="/404" element={<NotFoundPage />} />

@@ -1,5 +1,5 @@
 export type User = { id: string; full_name: string; email: string; created_at: string; updated_at: string };
-export type ProjectStatus = "draft";
+export type ProjectStatus = "draft" | "analyzed";
 export type Project = { id: string; name: string; description: string | null; status: ProjectStatus; created_at: string; updated_at: string };
 export type ProjectInput = { name: string; description?: string | null };
 
@@ -57,3 +57,49 @@ export type PanelLayout = LayoutPreview & {
 };
 export type RegisterInput = LoginInput & { full_name: string };
 export type TokenResponse = { access_token: string; token_type: string; expires_in: number };
+
+export type EnergySimulationInput = { system_loss_percent: number };
+export type MonthlyEnergyResult = { month: number; energy_kwh: number };
+export type SurfaceEnergyResult = {
+  roof_surface_id: string;
+  name: string;
+  installed_kwp: number;
+  tilt_deg: number;
+  azimuth_deg: number;
+  pvgis_aspect: number;
+  annual_kwh: number;
+  specific_yield_kwh_per_kwp: number;
+  monthly_results: MonthlyEnergyResult[];
+};
+export type EnergySimulation = {
+  id: string;
+  project_id: string;
+  provider_version: string;
+  method_version: string;
+  system_loss_percent: number;
+  installed_kwp: number;
+  annual_kwh: number;
+  specific_yield_kwh_per_kwp: number;
+  input_snapshot: Record<string, unknown>;
+  monthly_results: MonthlyEnergyResult[];
+  surface_results: SurfaceEnergyResult[];
+  created_at: string;
+};
+
+export type MonthlyConsumptionValue = { month: number; consumption_kwh: number };
+export type ConsumptionProfileInput = {
+  annual_consumption_kwh: number | null;
+  monthly_values: MonthlyConsumptionValue[];
+};
+export type ConsumptionProfile = ConsumptionProfileInput & {
+  id: string;
+  project_id: string;
+  source: "manual" | "bill_extracted" | "estimated";
+  known_months: number;
+  total_known_consumption_kwh: number;
+  average_known_monthly_kwh: number | null;
+  coverage_percent: number;
+  profile_kind: "annual_only" | "partial_monthly" | "complete_monthly";
+  created_at: string;
+  updated_at: string;
+};

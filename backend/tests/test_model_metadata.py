@@ -3,10 +3,13 @@ from sqlalchemy.dialects import postgresql
 
 from app.db.base import Base
 from app.models import (
+    ElectricityConsumptionProfile,
+    EnergySimulation,
     PanelLayout,
     Project,
     ProjectLocation,
     ProjectStatus,
+    PvgisCacheEntry,
     RoofSurface,
     RoofSurfaceShape,
     SolarPanel,
@@ -22,6 +25,9 @@ def test_expected_tables_are_registered() -> None:
         "roof_surfaces",
         "solar_panels",
         "panel_layouts",
+        "energy_simulations",
+        "pvgis_cache_entries",
+        "electricity_consumption_profiles",
     }.issubset(Base.metadata.tables)
 
 
@@ -77,3 +83,16 @@ def test_user_email_has_case_insensitive_unique_index() -> None:
 
 def test_solar_panel_sku_is_unique() -> None:
     assert SolarPanel.__table__.c.model_sku.unique is True
+
+
+def test_energy_simulation_is_project_scoped_and_cache_key_is_primary() -> None:
+    project_key = next(iter(EnergySimulation.__table__.c.project_id.foreign_keys))
+    assert project_key.ondelete == "CASCADE"
+    assert PvgisCacheEntry.__table__.c.cache_key.primary_key is True
+
+
+def test_consumption_profile_is_unique_and_cascades_with_project() -> None:
+    project_id = ElectricityConsumptionProfile.__table__.c.project_id
+    key = next(iter(project_id.foreign_keys))
+    assert project_id.unique is True
+    assert key.ondelete == "CASCADE"

@@ -61,4 +61,51 @@ describe("SolarPlan application routes", () => {
     expect(screen.getByText("West roof")).toBeInTheDocument();
     expect(screen.getByText(/12 panels · 5.22 kWp total/i)).toBeInTheDocument();
   });
+
+  test("runs and displays a complete production analysis", async () => {
+    const monthly_results = Array.from({ length: 12 }, (_, index) => ({ month: index + 1, energy_kwh: 1000 + index * 25 }));
+    const simulation = {
+      id: "sim1", project_id: "p1", provider_version: "5.3", method_version: "solarplan-pvgis-v1",
+      system_loss_percent: 14, installed_kwp: 10.44, annual_kwh: 13250,
+      specific_yield_kwh_per_kwp: 1269, input_snapshot: {}, monthly_results,
+      surface_results: [{
+        roof_surface_id: "s1", name: "South roof", installed_kwp: 10.44, tilt_deg: 30,
+        azimuth_deg: 180, pvgis_aspect: 0, annual_kwh: 13250,
+        specific_yield_kwh_per_kwp: 1269, monthly_results,
+      }],
+      created_at: "2026-11-03T12:00:00Z",
+    };
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(json(user))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(json(simulation, 201)));
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+    renderApp("/projects/p1/analysis");
+    expect(await screen.findByRole("heading", { name: /no production analysis yet/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /run first analysis/i }));
+    expect((await screen.findAllByText("13,250")).length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: /contribution by roof surface/i })).toBeInTheDocument();
+    expect(screen.getByText("South roof")).toBeInTheDocument();
+  });
+
+  test("saves an annual household consumption profile", async () => {
+    const profile = {
+      id: "c1", project_id: "p1", source: "manual", annual_consumption_kwh: 4800,
+      monthly_values: [], known_months: 0, total_known_consumption_kwh: 4800,
+      average_known_monthly_kwh: null, coverage_percent: 0, profile_kind: "annual_only",
+      created_at: "2026-11-03T12:00:00Z", updated_at: "2026-11-03T12:00:00Z",
+    };
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(json(user))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(json(profile)));
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+    renderApp("/projects/p1/consumption");
+    expect(await screen.findByRole("heading", { name: /household energy consumption/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /annual total/i }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /annual consumption/i }), { target: { value: "4800" } });
+    fireEvent.click(screen.getByRole("button", { name: /save consumption/i }));
+    expect(await screen.findByRole("heading", { name: /saved profile/i })).toBeInTheDocument();
+    expect(screen.getByText("4,800 kWh")).toBeInTheDocument();
+  });
 });

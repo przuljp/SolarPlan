@@ -10,6 +10,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.consumption_profile import ElectricityConsumptionProfile
+    from app.models.energy_simulation import EnergySimulation
     from app.models.panel_layout import PanelLayout
     from app.models.project_location import ProjectLocation
     from app.models.roof_configuration import RoofConfiguration
@@ -70,4 +72,15 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="project",
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+    energy_simulations: Mapped[list[EnergySimulation]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    consumption_profile: Mapped[ElectricityConsumptionProfile | None] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
     )
