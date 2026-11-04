@@ -4,6 +4,7 @@ from app.core.exceptions import (
     EnergySimulationNotFoundError,
     ProjectNotFoundError,
     PvgisUnavailableError,
+    SimulationComparisonInvalidError,
     SimulationInputsIncompleteError,
 )
 from app.routers.energy_simulations import simulation_error
@@ -33,3 +34,12 @@ def test_simulation_error_distinguishes_missing_resources() -> None:
     assert (
         simulation_error(EnergySimulationNotFoundError()).detail["code"] == "simulation_not_found"
     )
+
+
+def test_simulation_error_explains_invalid_comparison() -> None:
+    error = simulation_error(
+        SimulationComparisonInvalidError("Choose two different saved simulations to compare.")
+    )
+
+    assert error.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert error.detail["code"] == "simulation_comparison_invalid"

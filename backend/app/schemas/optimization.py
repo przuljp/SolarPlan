@@ -14,7 +14,9 @@ OptimizationCriterion = Literal["maximum_production", "consumption_match", "manu
 class OptimizationRequest(BaseModel):
     criterion: OptimizationCriterion
     system_loss_percent: float = Field(
-        default=settings.pvgis_default_system_loss_percent, ge=0, le=100
+        default=settings.pvgis_default_system_loss_percent,
+        ge=0,
+        le=settings.pvgis_max_system_loss_percent,
     )
     candidate_limit: int = Field(default=3, ge=2, le=5)
 

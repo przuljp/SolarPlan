@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { DEFAULT_SYSTEM_LOSS_PERCENT, isValidSystemLoss, SystemLossControl } from "../components/SystemLossControl";
 import { api, ApiError } from "../lib/api";
 import type { ConfigurationOptimization, OptimizationCriterion } from "../types/api";
 
@@ -54,9 +55,10 @@ export function ConfigurationOptimizerPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [criterion, setCriterion] = useState<OptimizationCriterion>("maximum_production");
-  const [systemLoss, setSystemLoss] = useState(14);
+  const [systemLoss, setSystemLoss] = useState(DEFAULT_SYSTEM_LOSS_PERCENT);
   const [candidateLimit, setCandidateLimit] = useState(3);
   const [result, setResult] = useState<ConfigurationOptimization | null>(null);
+  const systemLossValid = isValidSystemLoss(systemLoss);
   const latest = useQuery({
     queryKey: ["projects", projectId, "optimizations", "latest"],
     queryFn: async () => { try { return await api.latestOptimization(projectId!); } catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error; } },
@@ -84,11 +86,11 @@ export function ConfigurationOptimizerPage() {
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
     <header className="optimizer-heading"><div><h1>Configuration optimizer</h1><p>Compare feasible panel configurations across the complete roof model, then apply the plan that best fits your energy goal.</p></div></header>
 
-    <form className="content-panel optimizer-controls" onSubmit={(event) => { event.preventDefault(); run.mutate(); }}>
+    <form className="content-panel optimizer-controls" onSubmit={(event) => { event.preventDefault(); if (systemLossValid) run.mutate(); }}>
       <fieldset className="optimizer-mode-control"><legend>Optimization goal</legend>{modes.map((mode) => <label className={criterion === mode.value ? "is-selected" : ""} key={mode.value}><input type="radio" name="optimization-mode" value={mode.value} checked={criterion === mode.value} onChange={() => setCriterion(mode.value)} /><span><strong>{mode.title}</strong><small>{mode.description}</small></span></label>)}</fieldset>
-      <div className="optimizer-settings"><label>System loss <span>%</span><input type="number" min="0" max="100" step="0.1" value={systemLoss} onChange={(event) => setSystemLoss(Number(event.target.value))} /></label><label>Configurations shown<select value={candidateLimit} disabled={criterion === "manual"} onChange={(event) => setCandidateLimit(Number(event.target.value))}><option value={2}>2 candidates</option><option value={3}>3 candidates</option><option value={4}>4 candidates</option><option value={5}>5 candidates</option></select></label></div>
+      <div className="optimizer-settings"><SystemLossControl id="optimizer-system-loss" value={systemLoss} disabled={run.isPending} onChange={setSystemLoss} /><label className="optimizer-candidate-limit">Configurations shown<select value={candidateLimit} disabled={criterion === "manual" || run.isPending} onChange={(event) => setCandidateLimit(Number(event.target.value))}><option value={2}>2 candidates</option><option value={3}>3 candidates</option><option value={4}>4 candidates</option><option value={5}>5 candidates</option></select></label></div>
       {criterion === "manual" && <div className="optimizer-manual-note"><div><strong>The current roof plan will be evaluated.</strong><span>Change the shared panel model, orientation or count on the roof surfaces before running this mode.</span></div><Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces`}>Review roof layouts</Link></div>}
-      <div className="optimizer-run-row"><p>PVGIS may need a short moment for roof directions that are not already cached.</p><button className="button button-primary" type="submit" disabled={run.isPending}>{run.isPending ? "Comparing configurations…" : "Run optimizer"}</button></div>
+      <div className="optimizer-run-row"><p>PVGIS may need a short moment for roof directions that are not already cached.</p><button className="button button-primary" type="submit" disabled={run.isPending || !systemLossValid}>{run.isPending ? "Comparing configurations…" : "Run optimizer"}</button></div>
     </form>
 
     {run.isError && <div className="form-error optimizer-error" role="alert"><strong>Optimizer could not complete the comparison.</strong><span>{run.error instanceof ApiError ? run.error.message : "Please try again shortly."}</span></div>}

@@ -66,6 +66,10 @@ class EnergySimulationNotFoundError(Exception):
     """Raised when a project has no saved energy simulation."""
 
 
+class SimulationComparisonInvalidError(Exception):
+    """Raised when two distinct saved simulations were not provided for comparison."""
+
+
 class ConsumptionProfileNotFoundError(Exception):
     """Raised when a project has no saved household-consumption profile."""
 

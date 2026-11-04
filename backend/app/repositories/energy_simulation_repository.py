@@ -58,3 +58,17 @@ async def get_by_id(
         )
     )
     return result.scalar_one_or_none()
+
+
+async def get_by_ids(
+    session: AsyncSession,
+    project_id: UUID,
+    simulation_ids: set[UUID],
+) -> list[EnergySimulation]:
+    result = await session.execute(
+        select(EnergySimulation).where(
+            EnergySimulation.project_id == project_id,
+            EnergySimulation.id.in_(simulation_ids),
+        )
+    )
+    return list(result.scalars().all())

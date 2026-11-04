@@ -7,10 +7,12 @@ from app.core.exceptions import (
     ProjectNotFoundError,
     PvgisInvalidResponseError,
     PvgisUnavailableError,
+    SimulationComparisonInvalidError,
     SimulationInputsIncompleteError,
 )
 from app.dependencies.auth import CurrentUserDependency, SessionDependency
 from app.schemas.energy_simulation import (
+    EnergySimulationComparisonRead,
     EnergySimulationRead,
     EnergySimulationRequest,
     EnergySimulationSummaryRead,
@@ -35,6 +37,11 @@ def simulation_error(error: Exception) -> HTTPException:
         return HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"code": "simulation_inputs_incomplete", "message": str(error)},
+        )
+    if isinstance(error, SimulationComparisonInvalidError):
+        return HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={"code": "simulation_comparison_invalid", "message": str(error)},
         )
     return HTTPException(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -90,6 +97,30 @@ async def read_energy_simulation_history(
             session, project_id, current_user.id
         )
     except ProjectNotFoundError as error:
+        raise simulation_error(error) from error
+
+
+@router.get("/compare", response_model=EnergySimulationComparisonRead)
+async def read_energy_simulation_comparison(
+    project_id: UUID,
+    baseline_id: UUID,
+    comparison_id: UUID,
+    current_user: CurrentUserDependency,
+    session: SessionDependency,
+):
+    try:
+        return await energy_simulation_service.compare_simulations(
+            session,
+            project_id,
+            baseline_id,
+            comparison_id,
+            current_user.id,
+        )
+    except (
+        ProjectNotFoundError,
+        EnergySimulationNotFoundError,
+        SimulationComparisonInvalidError,
+    ) as error:
         raise simulation_error(error) from error
 
 

@@ -51,10 +51,12 @@ def test_energy_simulation_routes_are_exposed_and_protected() -> None:
     simulations = "/api/v1/projects/{project_id}/simulations"
     assert {"get", "post"}.issubset(paths[simulations])
     assert "get" in paths[f"{simulations}/latest"]
+    assert "get" in paths[f"{simulations}/compare"]
     assert "get" in paths[f"{simulations}/{{simulation_id}}"]
     assert paths[simulations]["post"]["security"] == [{"HTTPBearer": []}]
     assert paths[simulations]["get"]["security"] == [{"HTTPBearer": []}]
     assert paths[f"{simulations}/latest"]["get"]["security"] == [{"HTTPBearer": []}]
+    assert paths[f"{simulations}/compare"]["get"]["security"] == [{"HTTPBearer": []}]
     assert paths[f"{simulations}/{{simulation_id}}"]["get"]["security"] == [
         {"HTTPBearer": []}
     ]

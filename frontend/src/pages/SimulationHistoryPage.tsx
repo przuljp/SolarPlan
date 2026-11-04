@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { api } from "../lib/api";
 import type { EnergySimulationSummary } from "../types/api";
@@ -13,13 +14,23 @@ function sourceLabel(source: EnergySimulationSummary["source"]): string {
   return source === "configuration_optimizer" ? "Optimizer configuration" : "Manual analysis";
 }
 
-function SimulationHistoryRow({ simulation, latest }: { simulation: EnergySimulationSummary; latest: boolean }) {
+function SimulationHistoryRow({ simulation, latest, selected, selectionDisabled, onSelect }: {
+  simulation: EnergySimulationSummary;
+  latest: boolean;
+  selected: boolean;
+  selectionDisabled: boolean;
+  onSelect: () => void;
+}) {
   const panelName = simulation.panel_manufacturer && simulation.panel_model_sku
     ? `${simulation.panel_manufacturer} ${simulation.panel_model_sku}`
     : "Saved panel configuration";
 
   return <li>
-    <article className="simulation-history-row">
+    <article className={`simulation-history-row${selected ? " is-selected" : ""}`}>
+      <label className="simulation-select-control">
+        <input type="checkbox" checked={selected} disabled={selectionDisabled} onChange={onSelect} />
+        <span>{selected ? "Selected" : "Select"}<small>for comparison</small></span>
+      </label>
       <div className="simulation-history-identity">
         <div className="simulation-history-badges">
           <span className="status-badge">{sourceLabel(simulation.source)}</span>
@@ -41,6 +52,8 @@ function SimulationHistoryRow({ simulation, latest }: { simulation: EnergySimula
 
 export function SimulationHistoryPage() {
   const { projectId } = useParams();
+  const navigate = useNavigate();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const history = useQuery({
     queryKey: ["projects", projectId, "simulations", "history"],
     queryFn: () => api.energySimulations(projectId!),
@@ -48,6 +61,22 @@ export function SimulationHistoryPage() {
 
   if (history.isPending) return <main className="workspace-page"><div className="form-page-skeleton" role="status"><span className="sr-only">Loading simulation history…</span></div></main>;
   if (history.isError) return <main className="workspace-page"><div className="query-error"><div><strong>Simulation history could not be loaded.</strong><p>Check the connection and try again.</p></div><button className="button button-secondary" onClick={() => history.refetch()}>Try again</button></div></main>;
+  const simulations = history.data;
+
+  function toggleSelection(simulationId: string) {
+    setSelectedIds((current) => current.includes(simulationId)
+      ? current.filter((id) => id !== simulationId)
+      : current.length < 2 ? [...current, simulationId] : current);
+  }
+
+  function openComparison() {
+    const selected = simulations
+      .filter((simulation) => selectedIds.includes(simulation.id))
+      .sort((left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime());
+    if (selected.length !== 2) return;
+    const query = new URLSearchParams({ baseline: selected[0].id, comparison: selected[1].id });
+    navigate(`/projects/${projectId}/simulations/compare?${query}`);
+  }
 
   return <main className="workspace-page simulation-history-page">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
@@ -56,18 +85,32 @@ export function SimulationHistoryPage() {
       <Link className="button button-primary" to={`/projects/${projectId}/analysis`}>Open current analysis</Link>
     </header>
 
-    {history.data.length === 0 ? <section className="content-panel simulation-history-empty">
+    {simulations.length === 0 ? <section className="content-panel simulation-history-empty">
       <h2>No saved simulations yet</h2>
       <p>Run the first production analysis to create a permanent calculation snapshot for this project.</p>
       <Link className="button button-primary" to={`/projects/${projectId}/analysis`}>Run production analysis</Link>
     </section> : <>
       <div className="simulation-history-summary" aria-label="Simulation history summary">
-        <div><span>Saved calculations</span><strong>{history.data.length}</strong></div>
-        <div><span>Latest production</span><strong>{wholeNumber.format(history.data[0].annual_kwh)} <small>kWh/year</small></strong></div>
-        <div><span>Latest system</span><strong>{decimal.format(history.data[0].installed_kwp)} <small>kWp</small></strong></div>
+        <div><span>Saved calculations</span><strong>{simulations.length}</strong></div>
+        <div><span>Latest production</span><strong>{wholeNumber.format(simulations[0].annual_kwh)} <small>kWh/year</small></strong></div>
+        <div><span>Latest system</span><strong>{decimal.format(simulations[0].installed_kwp)} <small>kWp</small></strong></div>
       </div>
+      <section className="simulation-compare-control" aria-label="Simulation comparison selection">
+        <div>
+          <strong>Compare saved results</strong>
+          <span>{selectedIds.length === 0 ? "Select two simulations below." : selectedIds.length === 1 ? "Select one more simulation." : "Ready — the older result will be the baseline."}</span>
+        </div>
+        <button className="button button-primary" type="button" disabled={selectedIds.length !== 2} onClick={openComparison}>Compare selected</button>
+      </section>
       <ol className="simulation-history-list">
-        {history.data.map((simulation, index) => <SimulationHistoryRow key={simulation.id} simulation={simulation} latest={index === 0} />)}
+        {simulations.map((simulation, index) => <SimulationHistoryRow
+          key={simulation.id}
+          simulation={simulation}
+          latest={index === 0}
+          selected={selectedIds.includes(simulation.id)}
+          selectionDisabled={selectedIds.length === 2 && !selectedIds.includes(simulation.id)}
+          onSelect={() => toggleSelection(simulation.id)}
+        />)}
       </ol>
       <p className="simulation-history-note">Each entry is an immutable calculation snapshot. Current roof changes do not rewrite older results.</p>
     </>}

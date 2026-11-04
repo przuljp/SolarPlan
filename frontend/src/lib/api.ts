@@ -1,5 +1,5 @@
 import type {
-  ConfigurationOptimization, ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, EnergySimulationSummary, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, OptimizationInput, OptimizationSelection, PanelLayout,
+  ConfigurationOptimization, ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, EnergySimulationSummary, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, OptimizationInput, OptimizationSelection, PanelLayout, SimulationComparison,
   Project, ProjectInput, ProjectLocation, ProjectLocationInput, RegisterInput,
   RoofSurface, RoofSurfaceInput, SolarPanel, TokenResponse, User,
 } from "../types/api";
@@ -62,6 +62,7 @@ export const api = {
   latestEnergySimulation: (projectId: string) => request<EnergySimulation>(`/projects/${projectId}/simulations/latest`),
   energySimulations: (projectId: string) => request<EnergySimulationSummary[]>(`/projects/${projectId}/simulations`),
   energySimulation: (projectId: string, simulationId: string) => request<EnergySimulation>(`/projects/${projectId}/simulations/${simulationId}`),
+  compareEnergySimulations: (projectId: string, baselineId: string, comparisonId: string) => request<SimulationComparison>(`/projects/${projectId}/simulations/compare?${new URLSearchParams({ baseline_id: baselineId, comparison_id: comparisonId })}`),
   runEnergySimulation: (projectId: string, input: EnergySimulationInput) => request<EnergySimulation>(`/projects/${projectId}/simulations`, { method: "POST", body: JSON.stringify(input) }),
   consumptionProfile: (projectId: string) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`),
   saveConsumptionProfile: (projectId: string, input: ConsumptionProfileInput) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`, { method: "PUT", body: JSON.stringify(input) }),

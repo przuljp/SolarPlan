@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { DEFAULT_SYSTEM_LOSS_PERCENT, isValidSystemLoss, SystemLossControl } from "../components/SystemLossControl";
 import { api, ApiError } from "../lib/api";
 import type { EnergyComparison, EnergySimulation } from "../types/api";
 
@@ -100,7 +101,7 @@ export function AnalysisResult({ simulation, comparisonContent }: { simulation: 
 export function ProductionAnalysisPage() {
   const { projectId } = useParams();
   const queryClient = useQueryClient();
-  const [systemLoss, setSystemLoss] = useState(14);
+  const [systemLoss, setSystemLoss] = useState(DEFAULT_SYSTEM_LOSS_PERCENT);
   const [hasEditedSystemLoss, setHasEditedSystemLoss] = useState(false);
   const latest = useQuery({
     queryKey: ["projects", projectId, "simulations", "latest"],
@@ -124,6 +125,7 @@ export function ProductionAnalysisPage() {
     },
   });
   const simulation = run.data ?? latest.data;
+  const systemLossValid = isValidSystemLoss(systemLoss);
   const comparison = useQuery({
     queryKey: ["projects", projectId, "energy-comparison"],
     queryFn: async () => {
@@ -139,11 +141,9 @@ export function ProductionAnalysisPage() {
   return <main className="workspace-page production-analysis-page">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
     <header className="analysis-heading"><div><h1>Production analysis</h1><p>Estimate how much electricity the complete roof model could produce during a typical year.</p><Link className="analysis-history-link" to={`/projects/${projectId}/simulations`}>View simulation history</Link></div>
-      <form id="analysis-run-form" className="analysis-run-form" onSubmit={(event) => { event.preventDefault(); run.mutate(); }}>
-        <label htmlFor="system-loss">System loss <span>%</span></label>
-        <small id="system-loss-help" className="analysis-run-help">Includes estimated losses from temperature, wiring and inverter conversion. The default is 14%.</small>
-        <input id="system-loss" type="number" min="0" max="100" step="0.1" value={systemLoss} aria-describedby="system-loss-help" onChange={(event) => { setHasEditedSystemLoss(true); setSystemLoss(Number(event.target.value)); }} />
-        <button className="button button-primary" type="submit" disabled={run.isPending}>{run.isPending ? "Calculating…" : simulation ? "Recalculate" : "Run analysis"}</button>
+      <form id="analysis-run-form" className="analysis-run-form" onSubmit={(event) => { event.preventDefault(); if (systemLossValid) run.mutate(); }}>
+        <SystemLossControl id="analysis-system-loss" value={systemLoss} disabled={run.isPending} onChange={(value) => { setHasEditedSystemLoss(true); setSystemLoss(value); }} />
+        <button className="button button-primary" type="submit" disabled={run.isPending || !systemLossValid}>{run.isPending ? "Calculating…" : simulation ? "Recalculate" : "Run analysis"}</button>
       </form>
     </header>
 

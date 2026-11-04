@@ -18,6 +18,7 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { RoofSurfaceFormPage } from "./pages/RoofSurfaceFormPage";
 import { RoofSurfacesPage } from "./pages/RoofSurfacesPage";
 import { SimulationHistoryDetailPage, SimulationHistoryPage } from "./pages/SimulationHistoryPage";
+import { SimulationComparisonPage } from "./pages/SimulationComparisonPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
       <Route path="/projects/:projectId/roof-surfaces/:surfaceId/layout" element={<PanelLayoutPage />} />
       <Route path="/projects/:projectId/analysis" element={<ProductionAnalysisPage />} />
       <Route path="/projects/:projectId/simulations" element={<SimulationHistoryPage />} />
+      <Route path="/projects/:projectId/simulations/compare" element={<SimulationComparisonPage />} />
       <Route path="/projects/:projectId/simulations/:simulationId" element={<SimulationHistoryDetailPage />} />
       <Route path="/projects/:projectId/optimizer" element={<ConfigurationOptimizerPage />} />
       <Route path="/projects/:projectId/consumption" element={<ConsumptionPage />} />

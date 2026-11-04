@@ -1,8 +1,8 @@
 # SolarPlan — razvojni kontekst
 
-> Stanje dokumentovano: 3. novembar 2026.
+> Stanje dokumentovano: 4. novembar 2026.
 > Grana: `main` (`origin/main`)
-> Posljednji commit: `92d5e89 feat: add PVGIS analysis and consumption profiles`
+> Posljednji commit: `6a62307 feat: add configuration optimizer and simulation history`
 
 Ovaj dokument služi za nastavak razvoja u novom Codex razgovoru. Tvrdnje su označene kao **implementirano**, **planirano** ili **treba provjeriti** gdje stanje nije moguće pouzdano utvrditi iz koda i dosadašnjeg razgovora.
 
@@ -69,7 +69,8 @@ Glavne frontend rute:
 
 - Integracija sa javnim PVGIS 5.3 API-jem, bez API ključa.
 - Poseban PVGIS zahtjev za svaku krovnu plohu i sabiranje rezultata na nivou projekta.
-- Konverzija kompasnog azimuta u PVGIS konvenciju, podesiv sistemski gubitak (podrazumijevano 14%).
+- Konverzija kompasnog azimuta u PVGIS konvenciju; sistemski gubitak podrazumijevano je 14%, a ručni unos je ograničen na 0–30%.
+- Production Analysis i Optimizer koriste zajedničku progresivnu kontrolu: osnovni tok prikazuje preporučenih 14%, a numerički unos, reset i objašnjenje dostupni su kroz ručno podešavanje.
 - Retry obrada za privremene greške i cache po determinističkom SHA-256 ključu.
 - Čuvanje nepromjenjivog snapshot-a ulaza i rezultata simulacije.
 - Mjesečna i godišnja proizvodnja, specifični prinos, rezultat po plohi i datum simulacije.
@@ -103,6 +104,13 @@ Glavne frontend rute:
 - Detalj koristi nepromjenjivi `EnergySimulation` snapshot i ne poziva PVGIS ponovo niti vraća staru konfiguraciju krova.
 - Frontend ima poseban read-only prikaz istorijskog rezultata sa mjesečnim vrijednostima, pretpostavkama i doprinosom svake krovne plohe.
 - Istorija je dostupna iz pregleda projekta i trenutne Production Analysis stranice.
+
+### Poređenje dvije simulacije
+
+- Korisnik bira tačno dvije stavke iz istorije; starija automatski postaje baseline, a novija comparison.
+- Read-only servis poredi model i broj panela, ukupni kWp, godišnju proizvodnju, specifični prinos, sistemske gubitke i mjesečnu proizvodnju.
+- Poređenje koristi samo sačuvane snapshot-e, ne poziva PVGIS i ne mijenja projekat ili bazu.
+- Po dogovoru se ne prikazuju razlike po pojedinačnim krovnim plohama.
 
 ## 3. Najvažnije arhitektonske odluke
 
@@ -194,6 +202,7 @@ Sve rute imaju prefiks `/api/v1`.
 - `POST /projects/{project_id}/simulations` — pokretanje i čuvanje zbirne simulacije.
 - `GET /projects/{project_id}/simulations` — hronološka lista sažetaka sačuvanih simulacija.
 - `GET /projects/{project_id}/simulations/latest` — posljednja simulacija.
+- `GET /projects/{project_id}/simulations/compare` — poređenje dva sačuvana snapshot-a preko `baseline_id` i `comparison_id`.
 - `GET /projects/{project_id}/simulations/{simulation_id}` — kompletan read-only snapshot jedne simulacije.
 
 ### Potrošnja
@@ -219,9 +228,9 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Potvrđeno u posljednjoj provjeri
 
-- Frontend: `npm test -- --run` — **12/12 testova prolazi**.
+- Frontend: `npm test -- --run` — **14/14 testova prolazi**.
 - Frontend: `npm run build` — produkcijski TypeScript/Vite build prolazi; postoji upozorenje da je glavni JS chunk veći od 500 kB.
-- Backend: kompletna pytest kolekcija — **108/108 testova prolazi**.
+- Backend: kompletna pytest kolekcija — **115/115 testova prolazi**.
 - Backend: Ruff provjera `backend/app`, `backend/tests` i `backend/alembic` prolazi.
 
 ## 7. Poznati problemi i stvari koje treba provjeriti
@@ -241,9 +250,9 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Neposredni plan
 
-1. Poređenje dvije sačuvane simulacije bez ponovnog PVGIS proračuna.
-2. Open-Meteo integracija i kratkoročna procjena proizvodnje.
-3. PDF/CSV izvještaji iz sačuvane simulacije.
+1. Open-Meteo integracija i kratkoročna procjena proizvodnje.
+2. PDF/CSV izvještaji iz sačuvane simulacije.
+3. OpenAI objašnjenja rezultata, bez preuzimanja numeričkog proračuna od PVGIS-a.
 
 ### Kasniji plan
 
@@ -258,13 +267,13 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ## 9. Posljednji zadatak
 
-U trenutnom, još necommitovanom radnom stablu posljednji paket je **optimizer i istorija simulacija**: rangiranje i primjena konfiguracija, zaštićene API rute za istoriju, frontend registar i read-only prikaz istorijskog rezultata. Nakon toga je Overview lista ispravljena da prikazuje stvarni status projekta umjesto statičkog `Setup`.
+U trenutnom, još necommitovanom radnom stablu posljednji paketi su **poređenje dvije sačuvane simulacije** i **unaprijeđeno podešavanje sistemskih gubitaka**. Gubici ostaju direktan PVGIS parametar, bez drugog umanjenja rezultata; default je 14%, a ručni ulaz 0–30% dostupan je tek kroz napredno podešavanje.
 
 ## 10. Sljedeća tri konkretna koraka
 
-1. **Poređenje scenarija** — izbor dvije sačuvane simulacije i prikaz razlike u panelima, kWp, godišnjoj/mjesečnoj proizvodnji i pretpostavkama.
-2. **Open-Meteo prognoza** — kratkoročni vremenski kontekst i procjena proizvodnje, jasno odvojena od tipične godišnje PVGIS simulacije.
-3. **Izvoz rezultata** — PDF/CSV izvještaj iz izabrane nepromjenjive simulacije.
+1. **Open-Meteo prognoza** — kratkoročni vremenski kontekst i procjena proizvodnje, jasno odvojena od tipične godišnje PVGIS simulacije.
+2. **Izvoz rezultata** — PDF/CSV izvještaj iz izabrane nepromjenjive simulacije.
+3. **AI objašnjenje** — OpenAI adapter koji tumači provjerene rezultate, ali ne računa niti mijenja PVGIS vrijednosti.
 
 ## Pravila za nastavak u novom razgovoru
 

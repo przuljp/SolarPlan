@@ -33,3 +33,7 @@ export function PlusIcon(props: IconProps) {
 export function LogoutIcon(props: IconProps) {
   return <IconBase {...props}><path d="M10 17l5-5-5-5M15 12H3" /><path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></IconBase>;
 }
+
+export function InfoIcon(props: IconProps) {
+  return <IconBase {...props}><circle cx="12" cy="12" r="9" /><path d="M12 11v6" /><path d="M12 7.5h.01" /></IconBase>;
+}

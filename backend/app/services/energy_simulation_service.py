@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import (
     EnergySimulationNotFoundError,
+    SimulationComparisonInvalidError,
     SimulationInputsIncompleteError,
 )
 from app.integrations.pvgis_client import (
@@ -27,8 +28,12 @@ from app.repositories import (
     roof_surface_repository,
 )
 from app.schemas.energy_simulation import (
+    EnergySimulationComparisonItemRead,
+    EnergySimulationComparisonRead,
+    EnergySimulationMetricDeltasRead,
     EnergySimulationRequest,
     EnergySimulationSummaryRead,
+    MonthlyEnergyComparisonRead,
 )
 from app.services import project_service
 
@@ -294,3 +299,69 @@ async def get_simulation(
     if simulation is None:
         raise EnergySimulationNotFoundError
     return simulation
+
+
+async def compare_simulations(
+    session: AsyncSession,
+    project_id: UUID,
+    baseline_id: UUID,
+    comparison_id: UUID,
+    owner_id: UUID,
+) -> EnergySimulationComparisonRead:
+    await project_service.get_project(session, project_id, owner_id)
+    if baseline_id == comparison_id:
+        raise SimulationComparisonInvalidError(
+            "Choose two different saved simulations to compare."
+        )
+
+    simulations = await energy_simulation_repository.get_by_ids(
+        session, project_id, {baseline_id, comparison_id}
+    )
+    by_id = {simulation.id: simulation for simulation in simulations}
+    if baseline_id not in by_id or comparison_id not in by_id:
+        raise EnergySimulationNotFoundError
+
+    baseline = by_id[baseline_id]
+    comparison = by_id[comparison_id]
+    baseline_summary = simulation_summary(baseline)
+    comparison_summary = simulation_summary(comparison)
+    baseline_months = {
+        int(result["month"]): float(result["energy_kwh"])
+        for result in baseline.monthly_results
+    }
+    comparison_months = {
+        int(result["month"]): float(result["energy_kwh"])
+        for result in comparison.monthly_results
+    }
+
+    return EnergySimulationComparisonRead(
+        baseline=EnergySimulationComparisonItemRead(
+            **baseline_summary.model_dump(), monthly_results=baseline.monthly_results
+        ),
+        comparison=EnergySimulationComparisonItemRead(
+            **comparison_summary.model_dump(), monthly_results=comparison.monthly_results
+        ),
+        deltas=EnergySimulationMetricDeltasRead(
+            panel_count=comparison_summary.panel_count - baseline_summary.panel_count,
+            installed_kwp=comparison.installed_kwp - baseline.installed_kwp,
+            annual_kwh=comparison.annual_kwh - baseline.annual_kwh,
+            specific_yield_kwh_per_kwp=(
+                comparison.specific_yield_kwh_per_kwp
+                - baseline.specific_yield_kwh_per_kwp
+            ),
+            system_loss_percent=(
+                comparison.system_loss_percent - baseline.system_loss_percent
+            ),
+        ),
+        monthly_comparison=[
+            MonthlyEnergyComparisonRead(
+                month=month,
+                baseline_kwh=baseline_months.get(month, 0),
+                comparison_kwh=comparison_months.get(month, 0),
+                delta_kwh=(
+                    comparison_months.get(month, 0) - baseline_months.get(month, 0)
+                ),
+            )
+            for month in range(1, 13)
+        ],
+    )

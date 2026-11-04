@@ -101,6 +101,26 @@ export type EnergySimulationSummary = {
   panel_model_sku: string | null;
   created_at: string;
 };
+export type SimulationComparisonItem = EnergySimulationSummary & {
+  monthly_results: MonthlyEnergyResult[];
+};
+export type SimulationComparison = {
+  baseline: SimulationComparisonItem;
+  comparison: SimulationComparisonItem;
+  deltas: {
+    panel_count: number;
+    installed_kwp: number;
+    annual_kwh: number;
+    specific_yield_kwh_per_kwp: number;
+    system_loss_percent: number;
+  };
+  monthly_comparison: Array<{
+    month: number;
+    baseline_kwh: number;
+    comparison_kwh: number;
+    delta_kwh: number;
+  }>;
+};
 
 export type MonthlyConsumptionValue = { month: number; consumption_kwh: number };
 export type ConsumptionProfileInput = {

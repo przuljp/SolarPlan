@@ -112,10 +112,11 @@ describe("SolarPlan application routes", () => {
       }],
       created_at: "2026-11-03T12:00:00Z",
     };
-    vi.stubGlobal("fetch", vi.fn()
+    const fetchMock = vi.fn()
       .mockResolvedValueOnce(json(user))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
-      .mockResolvedValueOnce(json(simulation, 201)));
+      .mockResolvedValueOnce(json(simulation, 201));
+    vi.stubGlobal("fetch", fetchMock);
     sessionStorage.setItem("solarplan.access_token", "test-token");
     renderApp("/projects/p1/analysis");
     expect(await screen.findByRole("heading", { name: /no production analysis yet/i })).toBeInTheDocument();
@@ -123,6 +124,46 @@ describe("SolarPlan application routes", () => {
     expect((await screen.findAllByText("13,250")).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /contribution by roof surface/i })).toBeInTheDocument();
     expect(screen.getByText("South roof")).toBeInTheDocument();
+    expect(JSON.parse(String(fetchMock.mock.calls[2][1]?.body))).toEqual({ system_loss_percent: 14 });
+  });
+
+  test("reveals, validates and submits a manual system-loss value", async () => {
+    const monthly_results = Array.from({ length: 12 }, (_, index) => ({ month: index + 1, energy_kwh: 900 + index * 20 }));
+    const simulation = {
+      id: "sim-custom", project_id: "p1", provider_version: "5.3", method_version: "solarplan-pvgis-v1",
+      system_loss_percent: 9.5, installed_kwp: 8.7, annual_kwh: 11100,
+      specific_yield_kwh_per_kwp: 1275.86, input_snapshot: {}, monthly_results,
+      surface_results: [{
+        roof_surface_id: "s1", name: "South roof", installed_kwp: 8.7, tilt_deg: 30,
+        azimuth_deg: 180, pvgis_aspect: 0, annual_kwh: 11100,
+        specific_yield_kwh_per_kwp: 1275.86, monthly_results,
+      }],
+      created_at: "2026-11-04T12:00:00Z",
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(json(user))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(json(simulation, 201));
+    vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+
+    renderApp("/projects/p1/analysis");
+    expect(await screen.findByRole("heading", { name: /no production analysis yet/i })).toBeInTheDocument();
+    expect(screen.getByText(/system losses are the energy lost during solar system operation/i)).toBeInTheDocument();
+    expect(screen.queryByRole("spinbutton", { name: /loss percentage/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /manually adjust system losses/i }));
+    const input = screen.getByRole("spinbutton", { name: /loss percentage/i });
+    fireEvent.change(input, { target: { value: "31" } });
+    expect(screen.getByText(/enter a value from 0% to 30%/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^run analysis$/i })).toBeDisabled();
+
+    fireEvent.change(input, { target: { value: "9.5" } });
+    expect(screen.getByRole("button", { name: /^run analysis$/i })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /^run analysis$/i }));
+
+    expect((await screen.findAllByText("11,100")).length).toBeGreaterThan(0);
+    expect(JSON.parse(String(fetchMock.mock.calls[2][1]?.body))).toEqual({ system_loss_percent: 9.5 });
   });
 
   test("saves an annual household consumption profile", async () => {
@@ -228,5 +269,49 @@ describe("SolarPlan application routes", () => {
     expect(screen.getByText(/read-only calculation snapshot/i)).toBeInTheDocument();
     expect(screen.getByText("South roof")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /recalculate/i })).not.toBeInTheDocument();
+  });
+
+  test("selects two saved simulations and compares project totals", async () => {
+    const summaries = [
+      {
+        id: "newer", project_id: "p1", provider_version: "5.3", method_version: "solarplan-pvgis-v1",
+        source: "manual_analysis", system_loss_percent: 12, installed_kwp: 5.22,
+        annual_kwh: 6500, specific_yield_kwh_per_kwp: 1245.21, roof_surface_count: 2,
+        panel_count: 12, panel_manufacturer: "LONGi", panel_model_sku: "435M",
+        created_at: "2026-11-04T12:00:00Z",
+      },
+      {
+        id: "older", project_id: "p1", provider_version: "5.3", method_version: "solarplan-pvgis-v1",
+        source: "manual_analysis", system_loss_percent: 14, installed_kwp: 4.35,
+        annual_kwh: 5200, specific_yield_kwh_per_kwp: 1195.4, roof_surface_count: 1,
+        panel_count: 10, panel_manufacturer: "LONGi", panel_model_sku: "435M",
+        created_at: "2026-11-03T12:00:00Z",
+      },
+    ];
+    const comparison = {
+      baseline: { ...summaries[1], monthly_results: Array.from({ length: 12 }, (_, index) => ({ month: index + 1, energy_kwh: 300 + index })) },
+      comparison: { ...summaries[0], monthly_results: Array.from({ length: 12 }, (_, index) => ({ month: index + 1, energy_kwh: 400 + index })) },
+      deltas: { panel_count: 2, installed_kwp: 0.87, annual_kwh: 1300, specific_yield_kwh_per_kwp: 49.81, system_loss_percent: -2 },
+      monthly_comparison: Array.from({ length: 12 }, (_, index) => ({ month: index + 1, baseline_kwh: 300 + index, comparison_kwh: 400 + index, delta_kwh: 100 })),
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(json(user))
+      .mockResolvedValueOnce(json(summaries))
+      .mockResolvedValueOnce(json(comparison));
+    vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.setItem("solarplan.access_token", "test-token");
+
+    renderApp("/projects/p1/simulations");
+    expect(await screen.findByRole("heading", { name: /simulation history/i })).toBeInTheDocument();
+    const checkboxes = screen.getAllByRole("checkbox");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+    fireEvent.click(screen.getByRole("button", { name: /compare selected/i }));
+
+    expect(await screen.findByRole("heading", { name: /compare simulations/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /system-level differences/i })).toBeInTheDocument();
+    expect(screen.getByText("+1,300 kWh")).toBeInTheDocument();
+    expect(screen.getByText(/roof-surface-level differences are intentionally excluded/i)).toBeInTheDocument();
+    expect(String(fetchMock.mock.calls[2][0])).toContain("baseline_id=older&comparison_id=newer");
   });
 });

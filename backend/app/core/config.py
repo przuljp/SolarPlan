@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     pvgis_max_retries: int = 2
     pvgis_retry_backoff_seconds: float = 0.5
     pvgis_default_system_loss_percent: float = 14.0
+    pvgis_max_system_loss_percent: float = 30.0
 
     model_config = SettingsConfigDict(
         env_file=".env",
