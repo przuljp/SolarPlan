@@ -10,7 +10,11 @@ from app.core.exceptions import (
     SimulationInputsIncompleteError,
 )
 from app.dependencies.auth import CurrentUserDependency, SessionDependency
-from app.schemas.energy_simulation import EnergySimulationRead, EnergySimulationRequest
+from app.schemas.energy_simulation import (
+    EnergySimulationRead,
+    EnergySimulationRequest,
+    EnergySimulationSummaryRead,
+)
 from app.services import energy_simulation_service
 
 router = APIRouter(prefix="/projects/{project_id}/simulations", tags=["energy simulations"])
@@ -70,6 +74,35 @@ async def read_latest_energy_simulation(
     try:
         return await energy_simulation_service.get_latest_simulation(
             session, project_id, current_user.id
+        )
+    except (ProjectNotFoundError, EnergySimulationNotFoundError) as error:
+        raise simulation_error(error) from error
+
+
+@router.get("", response_model=list[EnergySimulationSummaryRead])
+async def read_energy_simulation_history(
+    project_id: UUID,
+    current_user: CurrentUserDependency,
+    session: SessionDependency,
+):
+    try:
+        return await energy_simulation_service.list_simulations(
+            session, project_id, current_user.id
+        )
+    except ProjectNotFoundError as error:
+        raise simulation_error(error) from error
+
+
+@router.get("/{simulation_id}", response_model=EnergySimulationRead)
+async def read_energy_simulation(
+    project_id: UUID,
+    simulation_id: UUID,
+    current_user: CurrentUserDependency,
+    session: SessionDependency,
+):
+    try:
+        return await energy_simulation_service.get_simulation(
+            session, project_id, simulation_id, current_user.id
         )
     except (ProjectNotFoundError, EnergySimulationNotFoundError) as error:
         raise simulation_error(error) from error

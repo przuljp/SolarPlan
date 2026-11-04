@@ -19,7 +19,7 @@ Ovaj dokument služi za nastavak razvoja u novom Codex razgovoru. Tvrdnje su ozn
   - `models/`: SQLAlchemy modeli;
   - `integrations/`: klijenti prema spoljnim servisima, trenutno PVGIS;
   - `dependencies/`: autentifikacija, DB sesija i zajedničke FastAPI zavisnosti.
-- Asinhroni SQLAlchemy/asyncpg, PostgreSQL i Alembic migracije `0001`–`0007`.
+- Asinhroni SQLAlchemy/asyncpg, PostgreSQL i Alembic migracije `0001`–`0008`.
 - JWT Bearer autentifikacija. Pristup projektu se uvijek provjerava prema vlasniku; tuđi ili nepostojeći privatni resurs vraća `404`.
 - Docker Compose pokreće PostgreSQL, backend i frontend. Backend pri pokretanju primjenjuje `alembic upgrade head`; korisnik ne kreira PostgreSQL bazu ručno.
 
@@ -86,6 +86,24 @@ Glavne frontend rute:
 - Izvedeno poređenje posljednje PVGIS simulacije i profila potrošnje: godišnji odnos i bilans, mjesečni višak/manjak za poznate mjesece, grafikon, tabela i upozorenje o ograničenjima.
 - Parcijalni profil ne proizvodi izmišljenu godišnju vrijednost; godišnji profil bez mjesečne raspodjele ne proizvodi izmišljene mjesečne vrijednosti.
 
+### Optimizer konfiguracija
+
+- Tri deterministička režima: maksimalna godišnja proizvodnja, približavanje pouzdanoj godišnjoj potrošnji i evaluacija ručno sačuvanog plana.
+- Automatsko poređenje svih verifikovanih panela uz zajednički model panela i nezavisan kapacitet/orijentaciju svake krovne plohe.
+- PVGIS specifični prinos računa se jednom po krovnoj plohi i koristi za reproducibilno rangiranje izvodljivih konfiguracija.
+- Čuvanje rang-liste, odbijenih modela, metodologije i ulaznog hash-a u `configuration_optimizations`.
+- Primjena bilo kojeg kandidata ažurira layoute svih ploha i čuva novu nepromjenjivu energetsku simulaciju.
+- Stari rezultat se odbija sa `409` ako su lokacija, krov, paneli ili ručni layout promijenjeni nakon optimizacije.
+- Frontend ekran prikazuje cilj, 2–5 kandidata, razlaganje po plohama i razlog preporuke.
+
+### Istorija simulacija
+
+- Za projekat se prikazuje hronološka lista svih sačuvanih PVGIS i optimizer simulacija.
+- Sažetak simulacije prikazuje izvor, datum, godišnju proizvodnju, snagu sistema, broj panela, model panela i procijenjene gubitke.
+- Detalj koristi nepromjenjivi `EnergySimulation` snapshot i ne poziva PVGIS ponovo niti vraća staru konfiguraciju krova.
+- Frontend ima poseban read-only prikaz istorijskog rezultata sa mjesečnim vrijednostima, pretpostavkama i doprinosom svake krovne plohe.
+- Istorija je dostupna iz pregleda projekta i trenutne Production Analysis stranice.
+
 ## 3. Najvažnije arhitektonske odluke
 
 - `repositories` su ekvivalent DAO sloju. Naziv je drugačiji, ali odgovornost je ista: izolacija upita prema bazi.
@@ -113,6 +131,7 @@ RoofSurface 1 ── 0..1 PanelLayout
 PanelLayout N ── 1 SolarPanel
 Project 1 ── N EnergySimulation
 Project 1 ── 0..1 ElectricityConsumptionProfile
+Project 1 ── N ConfigurationOptimization
 ```
 
 - `User` je vlasnik projekata.
@@ -123,7 +142,8 @@ Project 1 ── 0..1 ElectricityConsumptionProfile
 - Servis rasporeda provjerava da svi layout-i projekta koriste isti panel.
 - PVGIS servis za svaku plohu koristi lokaciju, nagib, azimut, broj panela i snagu panela; zatim sabira mjesečne i godišnje rezultate.
 - `EnergySimulation` čuva kompletan snapshot ulaza i rezultata, pa projekat može imati više istorijskih simulacija.
-- `ElectricityConsumptionProfile` je odvojen od simulacije. Sljedeći domeni korak je mjesečno i godišnje poređenje ova dva skupa podataka.
+- `ElectricityConsumptionProfile` je odvojen od simulacije; izvedeni servis poredi profil sa posljednjim sačuvanim energetskim rezultatom bez izmjene oba izvora.
+- `ConfigurationOptimization` čuva poređenje kandidata; izabrani kandidat može referencirati simulaciju nastalu njegovom primjenom.
 - Brisanje projekta kaskadno uklanja njegove lokacije, plohe, rasporede, simulacije i potrošnju; katalog panela je zajednički i ne briše se s projektom.
 
 ## 5. Aktivne API rute
@@ -172,7 +192,9 @@ Sve rute imaju prefiks `/api/v1`.
 ### PVGIS simulacije
 
 - `POST /projects/{project_id}/simulations` — pokretanje i čuvanje zbirne simulacije.
+- `GET /projects/{project_id}/simulations` — hronološka lista sažetaka sačuvanih simulacija.
 - `GET /projects/{project_id}/simulations/latest` — posljednja simulacija.
+- `GET /projects/{project_id}/simulations/{simulation_id}` — kompletan read-only snapshot jedne simulacije.
 
 ### Potrošnja
 
@@ -183,6 +205,12 @@ Sve rute imaju prefiks `/api/v1`.
 
 - `GET /projects/{project_id}/energy-comparison` — izvedeni read-only rezultat iz posljednje simulacije i postojećeg profila potrošnje.
 
+### Optimizer konfiguracija
+
+- `POST /projects/{project_id}/optimize` — računa i čuva rang-listu prema izabranom kriteriju.
+- `GET /projects/{project_id}/optimizations/latest` — vraća posljednje sačuvano poređenje.
+- `POST /projects/{project_id}/optimizations/{optimization_id}/select` — validira i primjenjuje izabrani kandidat te čuva simulaciju.
+
 ### Neaktivni legacy kod
 
 U repozitoriju još postoje model, migracija i izvorni router za staru jednu `RoofConfiguration` i rutu `/projects/{project_id}/roof`, ali router nije registrovan u aplikaciji. Aktivni tok koristi `RoofSurface`. Brisanje legacy koda i eventualna migracija starih podataka tek treba da se procijene.
@@ -191,28 +219,20 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Potvrđeno u posljednjoj provjeri
 
-- Frontend: `npm test -- --run` — **7/7 testova prolazi**.
+- Frontend: `npm test -- --run` — **12/12 testova prolazi**.
 - Frontend: `npm run build` — produkcijski TypeScript/Vite build prolazi; postoji upozorenje da je glavni JS chunk veći od 500 kB.
-- Git radno stablo je prije izrade ovog dokumenta bilo čisto, a `main` nije pokazivao odstupanje od `origin/main`.
-
-### Nije potvrđeno u posljednjoj provjeri
-
-- Backend testovi postoje za autentifikaciju, API ugovore, modele, repozitorije, geokodiranje, layout engine, PVGIS klijent i servis, simulacije i potrošnju.
-- Lokalni Python 3.13 nema instaliran `pytest`, pa kompletna backend kolekcija nije pokrenuta u ovoj provjeri.
-- Ranije je PVGIS stanje imalo 86 prolaznih testova, ali to je bilo prije posljednjih izmjena potrošnje i nije dokaz za trenutni commit. Trenutnu kolekciju treba pokrenuti unutar backend Docker kontejnera ili odgovarajućeg virtualnog okruženja.
+- Backend: kompletna pytest kolekcija — **108/108 testova prolazi**.
+- Backend: Ruff provjera `backend/app`, `backend/tests` i `backend/alembic` prolazi.
 
 ## 7. Poznati problemi i stvari koje treba provjeriti
 
 ### Poznato
 
-- Project Detail trenutno statički prikazuje `Draft`, iako backend poslije simulacije može imati status `analyzed`.
-- API daje samo posljednju simulaciju; nema liste istorije niti detalja pojedinačne simulacije.
 - Legacy `RoofConfiguration` kod i tabela još postoje uz novi model `RoofSurface`.
 - README opis sljedećeg koraka je djelimično zastario jer su Production Analysis UI i ručni unos potrošnje već implementirani.
 
 ### Treba provjeriti
 
-- Pokrenuti kompletnu backend test kolekciju na trenutnom commit-u.
 - Provjeriti puni end-to-end tok nakon čistog `docker compose up --build`: registracija → projekat → lokacija → više ploha → layout → PVGIS → potrošnja.
 - Provjeriti da li u lokalnoj razvojnoj bazi još postoji privremena trapezna test-ploha; to je podatak iz razgovora, ne dio verzionisanog koda.
 - Potvrditi ponašanje svih dev okruženja kod Vite hot reload-a; ranije je povremeno bio potreban restart frontend kontejnera i hard refresh.
@@ -221,13 +241,12 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Neposredni plan
 
-1. Deterministički optimizer i poređenje konfiguracija: maksimalna proizvodnja, približavanje potrošnji i ručni scenario.
-2. Istorija simulacija: lista, detalji, poređenje i bolji projektni dashboard.
-3. Verifikacija kompletnog novog energy-comparison toka unutar Docker okruženja i dodavanje frontend testova za njegova stanja.
+1. Poređenje dvije sačuvane simulacije bez ponovnog PVGIS proračuna.
+2. Open-Meteo integracija i kratkoročna procjena proizvodnje.
+3. PDF/CSV izvještaji iz sačuvane simulacije.
 
 ### Kasniji plan
 
-- Open-Meteo integracija i kratkoročna procjena proizvodnje.
 - PDF/CSV izvještaji.
 - OpenAI adapter za objašnjenje rezultata, savjetnika i opcionalnu obradu računa uz saglasnost i validaciju; AI ne radi osnovni numerički proračun.
 - Upload računa, kontrolisano izdvajanje potrošnje i sigurno čišćenje fajlova.
@@ -239,13 +258,13 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ## 9. Posljednji zadatak
 
-Posljednji commitovani razvojni paket na trenutnom `HEAD`-u je **PVGIS analiza proizvodnje i profil potrošnje** (`92d5e89`). U trenutnom, još necommitovanom radnom stablu posljednji zadatak je **poređenje proizvodnje i potrošnje**: read-only backend servis/endpoint i prikaz na Production Analysis stranici.
+U trenutnom, još necommitovanom radnom stablu posljednji paket je **optimizer i istorija simulacija**: rangiranje i primjena konfiguracija, zaštićene API rute za istoriju, frontend registar i read-only prikaz istorijskog rezultata. Nakon toga je Overview lista ispravljena da prikazuje stvarni status projekta umjesto statičkog `Setup`.
 
 ## 10. Sljedeća tri konkretna koraka
 
-1. **Verifikacija trenutnog zadatka** — pokrenuti puni backend pytest u Docker kontejneru i pregledati Production Analysis nakon prijave za kompletan, parcijalan i godišnji profil.
-2. **Korekcija statusa projekta** — zamijeniti statički `Draft` stvarnim `project.status` podatkom i testirati prelaz nakon PVGIS simulacije.
-3. **Optimizer — prvi vertikalni rez** — definisati schema/service za režim maksimalne godišnje proizvodnje uz ograničen, keširan skup kandidata; zatim proširiti na režim prema potrošnji.
+1. **Poređenje scenarija** — izbor dvije sačuvane simulacije i prikaz razlike u panelima, kWp, godišnjoj/mjesečnoj proizvodnji i pretpostavkama.
+2. **Open-Meteo prognoza** — kratkoročni vremenski kontekst i procjena proizvodnje, jasno odvojena od tipične godišnje PVGIS simulacije.
+3. **Izvoz rezultata** — PDF/CSV izvještaj iz izabrane nepromjenjive simulacije.
 
 ## Pravila za nastavak u novom razgovoru
 

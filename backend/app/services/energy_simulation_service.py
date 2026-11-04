@@ -26,7 +26,10 @@ from app.repositories import (
     project_location_repository,
     roof_surface_repository,
 )
-from app.schemas.energy_simulation import EnergySimulationRequest
+from app.schemas.energy_simulation import (
+    EnergySimulationRequest,
+    EnergySimulationSummaryRead,
+)
 from app.services import project_service
 
 METHOD_VERSION = "solarplan-pvgis-v1"
@@ -220,6 +223,74 @@ async def get_latest_simulation(
 ) -> EnergySimulation:
     await project_service.get_project(session, project_id, owner_id)
     simulation = await energy_simulation_repository.get_latest(session, project_id)
+    if simulation is None:
+        raise EnergySimulationNotFoundError
+    return simulation
+
+
+def simulation_summary(simulation: EnergySimulation) -> EnergySimulationSummaryRead:
+    snapshot = simulation.input_snapshot if isinstance(simulation.input_snapshot, dict) else {}
+    surfaces = snapshot.get("surfaces")
+    surface_snapshots = surfaces if isinstance(surfaces, list) else []
+    panel_count = sum(
+        int(surface.get("panel_count", 0))
+        for surface in surface_snapshots
+        if isinstance(surface, dict)
+    )
+
+    panel = snapshot.get("panel")
+    if not isinstance(panel, dict):
+        panel = next(
+            (
+                surface.get("panel")
+                for surface in surface_snapshots
+                if isinstance(surface, dict) and isinstance(surface.get("panel"), dict)
+            ),
+            {},
+        )
+
+    return EnergySimulationSummaryRead(
+        id=simulation.id,
+        project_id=simulation.project_id,
+        provider_version=simulation.provider_version,
+        method_version=simulation.method_version,
+        source=(
+            "configuration_optimizer"
+            if snapshot.get("source") == "configuration_optimizer"
+            else "manual_analysis"
+        ),
+        system_loss_percent=simulation.system_loss_percent,
+        installed_kwp=simulation.installed_kwp,
+        annual_kwh=simulation.annual_kwh,
+        specific_yield_kwh_per_kwp=simulation.specific_yield_kwh_per_kwp,
+        roof_surface_count=len(simulation.surface_results),
+        panel_count=panel_count,
+        panel_manufacturer=panel.get("manufacturer") if isinstance(panel, dict) else None,
+        panel_model_sku=panel.get("model_sku") if isinstance(panel, dict) else None,
+        created_at=simulation.created_at,
+    )
+
+
+async def list_simulations(
+    session: AsyncSession,
+    project_id: UUID,
+    owner_id: UUID,
+) -> list[EnergySimulationSummaryRead]:
+    await project_service.get_project(session, project_id, owner_id)
+    simulations = await energy_simulation_repository.list_by_project(session, project_id)
+    return [simulation_summary(simulation) for simulation in simulations]
+
+
+async def get_simulation(
+    session: AsyncSession,
+    project_id: UUID,
+    simulation_id: UUID,
+    owner_id: UUID,
+) -> EnergySimulation:
+    await project_service.get_project(session, project_id, owner_id)
+    simulation = await energy_simulation_repository.get_by_id(
+        session, project_id, simulation_id
+    )
     if simulation is None:
         raise EnergySimulationNotFoundError
     return simulation

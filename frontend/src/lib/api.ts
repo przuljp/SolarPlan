@@ -1,5 +1,5 @@
 import type {
-  ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, PanelLayout,
+  ConfigurationOptimization, ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, EnergySimulationSummary, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, OptimizationInput, OptimizationSelection, PanelLayout,
   Project, ProjectInput, ProjectLocation, ProjectLocationInput, RegisterInput,
   RoofSurface, RoofSurfaceInput, SolarPanel, TokenResponse, User,
 } from "../types/api";
@@ -60,8 +60,13 @@ export const api = {
   searchLocations: (query: string) => request<GeocodingResult[]>(`/geocoding/search?${new URLSearchParams({ q: query })}`),
   reverseLocation: (latitude: number, longitude: number) => request<GeocodingResult>(`/geocoding/reverse?${new URLSearchParams({ lat: String(latitude), lon: String(longitude) })}`),
   latestEnergySimulation: (projectId: string) => request<EnergySimulation>(`/projects/${projectId}/simulations/latest`),
+  energySimulations: (projectId: string) => request<EnergySimulationSummary[]>(`/projects/${projectId}/simulations`),
+  energySimulation: (projectId: string, simulationId: string) => request<EnergySimulation>(`/projects/${projectId}/simulations/${simulationId}`),
   runEnergySimulation: (projectId: string, input: EnergySimulationInput) => request<EnergySimulation>(`/projects/${projectId}/simulations`, { method: "POST", body: JSON.stringify(input) }),
   consumptionProfile: (projectId: string) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`),
   saveConsumptionProfile: (projectId: string, input: ConsumptionProfileInput) => request<ConsumptionProfile>(`/projects/${projectId}/consumption`, { method: "PUT", body: JSON.stringify(input) }),
   energyComparison: (projectId: string) => request<EnergyComparison>(`/projects/${projectId}/energy-comparison`),
+  runOptimization: (projectId: string, input: OptimizationInput) => request<ConfigurationOptimization>(`/projects/${projectId}/optimize`, { method: "POST", body: JSON.stringify(input) }),
+  latestOptimization: (projectId: string) => request<ConfigurationOptimization>(`/projects/${projectId}/optimizations/latest`),
+  selectOptimizationCandidate: (projectId: string, optimizationId: string, candidateId: string) => request<OptimizationSelection>(`/projects/${projectId}/optimizations/${optimizationId}/select`, { method: "POST", body: JSON.stringify({ candidate_id: candidateId }) }),
 };

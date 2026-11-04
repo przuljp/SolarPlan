@@ -4,6 +4,7 @@ import { AppShell } from "./components/AppShell";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthPage } from "./pages/AuthPage";
 import { ConsumptionPage } from "./pages/ConsumptionPage";
+import { ConfigurationOptimizerPage } from "./pages/ConfigurationOptimizerPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LandingPage } from "./pages/LandingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -16,6 +17,7 @@ import { ProjectLocationPage } from "./pages/ProjectLocationPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { RoofSurfaceFormPage } from "./pages/RoofSurfaceFormPage";
 import { RoofSurfacesPage } from "./pages/RoofSurfacesPage";
+import { SimulationHistoryDetailPage, SimulationHistoryPage } from "./pages/SimulationHistoryPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 export default function App() {
@@ -36,6 +38,9 @@ export default function App() {
       <Route path="/projects/:projectId/roof-surfaces/:surfaceId/panels" element={<PanelSelectionPage />} />
       <Route path="/projects/:projectId/roof-surfaces/:surfaceId/layout" element={<PanelLayoutPage />} />
       <Route path="/projects/:projectId/analysis" element={<ProductionAnalysisPage />} />
+      <Route path="/projects/:projectId/simulations" element={<SimulationHistoryPage />} />
+      <Route path="/projects/:projectId/simulations/:simulationId" element={<SimulationHistoryDetailPage />} />
+      <Route path="/projects/:projectId/optimizer" element={<ConfigurationOptimizerPage />} />
       <Route path="/projects/:projectId/consumption" element={<ConsumptionPage />} />
       <Route path="/settings" element={<SettingsPage />} />
     </Route></Route>

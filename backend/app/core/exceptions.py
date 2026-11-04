@@ -68,3 +68,19 @@ class EnergySimulationNotFoundError(Exception):
 
 class ConsumptionProfileNotFoundError(Exception):
     """Raised when a project has no saved household-consumption profile."""
+
+
+class OptimizationNotFoundError(Exception):
+    """Raised when a saved optimization does not belong to the owned project."""
+
+
+class OptimizationInputsIncompleteError(Exception):
+    """Raised when deterministic optimization cannot be run with current inputs."""
+
+
+class OptimizationCandidateNotFoundError(Exception):
+    """Raised when a selected candidate is absent from the saved comparison."""
+
+
+class StaleOptimizationError(Exception):
+    """Raised when roof, location, panel, or layout inputs changed after optimization."""

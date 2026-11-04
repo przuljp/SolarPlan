@@ -1,5 +1,5 @@
 export type User = { id: string; full_name: string; email: string; created_at: string; updated_at: string };
-export type ProjectStatus = "draft" | "analyzed";
+export type ProjectStatus = "draft" | "ready_for_analysis" | "analyzed";
 export type Project = { id: string; name: string; description: string | null; status: ProjectStatus; created_at: string; updated_at: string };
 export type ProjectInput = { name: string; description?: string | null };
 
@@ -85,6 +85,22 @@ export type EnergySimulation = {
   surface_results: SurfaceEnergyResult[];
   created_at: string;
 };
+export type EnergySimulationSummary = {
+  id: string;
+  project_id: string;
+  provider_version: string;
+  method_version: string;
+  source: "manual_analysis" | "configuration_optimizer";
+  system_loss_percent: number;
+  installed_kwp: number;
+  annual_kwh: number;
+  specific_yield_kwh_per_kwp: number;
+  roof_surface_count: number;
+  panel_count: number;
+  panel_manufacturer: string | null;
+  panel_model_sku: string | null;
+  created_at: string;
+};
 
 export type MonthlyConsumptionValue = { month: number; consumption_kwh: number };
 export type ConsumptionProfileInput = {
@@ -125,4 +141,65 @@ export type EnergyComparison = {
   months_with_deficit: number;
   months_balanced: number;
   monthly_comparison: MonthlyEnergyComparison[];
+};
+
+export type OptimizationCriterion = "maximum_production" | "consumption_match" | "manual";
+export type OptimizationInput = {
+  criterion: OptimizationCriterion;
+  system_loss_percent: number;
+  candidate_limit: number;
+};
+export type OptimizationSurfaceResult = {
+  roof_surface_id: string;
+  name: string;
+  orientation: PanelOrientation;
+  panel_count: number;
+  maximum_panel_count: number;
+  installed_kwp: number;
+  occupied_area_m2: number;
+  utilization_percent: number;
+  tilt_deg: number;
+  azimuth_deg: number;
+  annual_kwh: number;
+  monthly_results: MonthlyEnergyResult[];
+};
+export type OptimizationCandidate = {
+  candidate_id: string;
+  rank: number;
+  recommended: boolean;
+  panel: SolarPanel;
+  total_panel_count: number;
+  installed_kwp: number;
+  occupied_area_m2: number;
+  annual_kwh: number;
+  specific_yield_kwh_per_kwp: number;
+  target_difference_kwh: number | null;
+  target_coverage_percent: number | null;
+  monthly_results: MonthlyEnergyResult[];
+  surfaces: OptimizationSurfaceResult[];
+  explanation: string;
+};
+export type RejectedOptimizationCandidate = {
+  panel_id: string;
+  panel_name: string;
+  reason: string;
+};
+export type ConfigurationOptimization = {
+  id: string;
+  project_id: string;
+  criterion: OptimizationCriterion;
+  system_loss_percent: number;
+  target_consumption_kwh: number | null;
+  input_hash: string;
+  candidates: OptimizationCandidate[];
+  rejected_candidates: RejectedOptimizationCandidate[];
+  selected_candidate_id: string | null;
+  selected_simulation_id: string | null;
+  methodology: string;
+  created_at: string;
+};
+export type OptimizationSelection = {
+  optimization: ConfigurationOptimization;
+  simulation_id: string;
+  applied_candidate_id: string;
 };

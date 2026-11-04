@@ -28,7 +28,9 @@ export function ProjectDetailPage() {
         <Link className={`button ${analysisReady ? "button-secondary" : "button-primary"}`} to={`/projects/${projectId}/roof-surfaces`}>Manage roof surfaces {!analysisReady && <ArrowIcon />}</Link>
         <Link className="button button-secondary" to={`/projects/${projectId}/consumption`}>Energy consumption</Link>
         {analysisReady && <Link className="button button-primary" to={`/projects/${projectId}/analysis`}>View production analysis <ArrowIcon /></Link>}
+        {analysisReady && <Link className="button button-secondary" to={`/projects/${projectId}/optimizer`}>Compare configurations</Link>}
+        {project.data.status === "analyzed" && <Link className="button button-secondary" to={`/projects/${projectId}/simulations`}>Simulation history</Link>}
       </div>}
-    </div><aside className="content-panel detail-register"><h2>Project register</h2><dl><div><dt>Status</dt><dd>Draft</dd></div><div><dt>Location</dt><dd>{location.data ? "Configured" : "Not set"}</dd></div><div><dt>Roof model</dt><dd>{surfaces.data?.length ? "Multiple surfaces enabled" : "Not configured"}</dd></div><div><dt>Panel layouts</dt><dd>{surfaces.data?.filter((s) => s.panel_layout).length ?? 0} of {surfaces.data?.length ?? 0}</dd></div></dl><p className="estimate-note">Every surface has independent geometry, but all layouts share one panel model.</p></aside></section>
+    </div><aside className="content-panel detail-register"><h2>Project register</h2><dl><div><dt>Status</dt><dd>{project.data.status === "analyzed" ? "Analyzed" : "Draft"}</dd></div><div><dt>Location</dt><dd>{location.data ? "Configured" : "Not set"}</dd></div><div><dt>Roof model</dt><dd>{surfaces.data?.length ? "Multiple surfaces enabled" : "Not configured"}</dd></div><div><dt>Panel layouts</dt><dd>{surfaces.data?.filter((s) => s.panel_layout).length ?? 0} of {surfaces.data?.length ?? 0}</dd></div></dl><p className="estimate-note">Every surface has independent geometry, but all layouts share one panel model.</p></aside></section>
   </main>;
 }

@@ -9,6 +9,12 @@ function formatDate(value: string) {
   );
 }
 
+const projectStatus = {
+  draft: { label: "Draft", complete: false },
+  ready_for_analysis: { label: "Ready", complete: true },
+  analyzed: { label: "Analyzed", complete: true },
+} as const;
+
 export function ProjectList({
   projects,
   emptyTitle = "No solar projects yet",
@@ -29,8 +35,9 @@ export function ProjectList({
 
   return (
     <div className="project-list">
-      {projects.map((project, index) => (
-        <Link className="project-row" to={`/projects/${project.id}`} key={project.id}>
+      {projects.map((project, index) => {
+        const status = projectStatus[project.status];
+        return <Link className="project-row" to={`/projects/${project.id}`} key={project.id}>
           <span className="project-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
           <span className="project-main">
             <strong>{project.name}</strong>
@@ -40,10 +47,10 @@ export function ProjectList({
             <small>Updated</small>
             <span>{formatDate(project.updated_at)}</span>
           </span>
-          <span className="status-badge">Setup</span>
+          <span className={`status-badge ${status.complete ? "status-complete" : ""}`}>{status.label}</span>
           <ArrowIcon className="row-arrow" />
-        </Link>
-      ))}
+        </Link>;
+      })}
     </div>
   );
 }

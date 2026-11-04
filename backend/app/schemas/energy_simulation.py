@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -44,4 +44,21 @@ class EnergySimulationRead(BaseModel):
     input_snapshot: dict[str, Any]
     monthly_results: list[MonthlyEnergyResult]
     surface_results: list[SurfaceEnergyResult]
+    created_at: datetime
+
+
+class EnergySimulationSummaryRead(BaseModel):
+    id: UUID
+    project_id: UUID
+    provider_version: str
+    method_version: str
+    source: Literal["manual_analysis", "configuration_optimizer"]
+    system_loss_percent: float
+    installed_kwp: float
+    annual_kwh: float
+    specific_yield_kwh_per_kwp: float
+    roof_surface_count: int = Field(ge=0)
+    panel_count: int = Field(ge=0)
+    panel_manufacturer: str | None
+    panel_model_sku: str | None
     created_at: datetime

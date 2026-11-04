@@ -46,7 +46,7 @@ function EnergyComparisonPanel({ comparison, projectId }: { comparison: EnergyCo
   </section>;
 }
 
-function AnalysisResult({ simulation, comparisonContent }: { simulation: EnergySimulation; comparisonContent: ReactNode }) {
+export function AnalysisResult({ simulation, comparisonContent }: { simulation: EnergySimulation; comparisonContent?: ReactNode }) {
   const maximumMonth = Math.max(...simulation.monthly_results.map((item) => item.energy_kwh), 1);
   const maximumSurface = Math.max(...simulation.surface_results.map((item) => item.annual_kwh), 1);
 
@@ -119,6 +119,7 @@ export function ProductionAnalysisPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["projects", projectId], exact: true }),
         queryClient.invalidateQueries({ queryKey: ["projects", projectId, "energy-comparison"] }),
+        queryClient.invalidateQueries({ queryKey: ["projects", projectId, "simulations", "history"] }),
       ]);
     },
   });
@@ -137,7 +138,7 @@ export function ProductionAnalysisPage() {
 
   return <main className="workspace-page production-analysis-page">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
-    <header className="analysis-heading"><div><h1>Production analysis</h1><p>Estimate how much electricity the complete roof model could produce during a typical year.</p></div>
+    <header className="analysis-heading"><div><h1>Production analysis</h1><p>Estimate how much electricity the complete roof model could produce during a typical year.</p><Link className="analysis-history-link" to={`/projects/${projectId}/simulations`}>View simulation history</Link></div>
       <form id="analysis-run-form" className="analysis-run-form" onSubmit={(event) => { event.preventDefault(); run.mutate(); }}>
         <label htmlFor="system-loss">System loss <span>%</span></label>
         <small id="system-loss-help" className="analysis-run-help">Includes estimated losses from temperature, wiring and inverter conversion. The default is 14%.</small>

@@ -32,3 +32,29 @@ async def get_latest(
         .limit(1)
     )
     return result.scalar_one_or_none()
+
+
+async def list_by_project(
+    session: AsyncSession,
+    project_id: UUID,
+) -> list[EnergySimulation]:
+    result = await session.execute(
+        select(EnergySimulation)
+        .where(EnergySimulation.project_id == project_id)
+        .order_by(EnergySimulation.created_at.desc(), EnergySimulation.id.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def get_by_id(
+    session: AsyncSession,
+    project_id: UUID,
+    simulation_id: UUID,
+) -> EnergySimulation | None:
+    result = await session.execute(
+        select(EnergySimulation).where(
+            EnergySimulation.id == simulation_id,
+            EnergySimulation.project_id == project_id,
+        )
+    )
+    return result.scalar_one_or_none()

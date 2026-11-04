@@ -3,6 +3,7 @@ from sqlalchemy.dialects import postgresql
 
 from app.db.base import Base
 from app.models import (
+    ConfigurationOptimization,
     ElectricityConsumptionProfile,
     EnergySimulation,
     PanelLayout,
@@ -28,6 +29,7 @@ def test_expected_tables_are_registered() -> None:
         "energy_simulations",
         "pvgis_cache_entries",
         "electricity_consumption_profiles",
+        "configuration_optimizations",
     }.issubset(Base.metadata.tables)
 
 
@@ -96,3 +98,12 @@ def test_consumption_profile_is_unique_and_cascades_with_project() -> None:
     key = next(iter(project_id.foreign_keys))
     assert project_id.unique is True
     assert key.ondelete == "CASCADE"
+
+
+def test_configuration_optimization_is_project_scoped() -> None:
+    project_key = next(iter(ConfigurationOptimization.__table__.c.project_id.foreign_keys))
+    simulation_key = next(
+        iter(ConfigurationOptimization.__table__.c.selected_simulation_id.foreign_keys)
+    )
+    assert project_key.ondelete == "CASCADE"
+    assert simulation_key.ondelete == "SET NULL"

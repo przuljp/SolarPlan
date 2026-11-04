@@ -1,3 +1,4 @@
+from app.models.configuration_optimization import ConfigurationOptimization
 from app.models.consumption_profile import ElectricityConsumptionProfile
 from app.models.energy_simulation import EnergySimulation, PvgisCacheEntry
 from app.models.panel_layout import PanelLayout
@@ -10,6 +11,7 @@ from app.models.user import User
 
 __all__ = [
     "ElectricityConsumptionProfile",
+    "ConfigurationOptimization",
     "EnergySimulation",
     "PanelLayout",
     "PvgisCacheEntry",
