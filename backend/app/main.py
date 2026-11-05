@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.routers.ai_explanations import router as ai_explanations_router
 from app.routers.auth import router as auth_router
 from app.routers.configuration_optimizations import router as configuration_optimizations_router
 from app.routers.consumption import router as consumption_router
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     for router in (
+        ai_explanations_router,
         health_router,
         auth_router,
         geocoding_router,

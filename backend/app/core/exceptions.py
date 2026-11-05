@@ -88,3 +88,23 @@ class OptimizationCandidateNotFoundError(Exception):
 
 class StaleOptimizationError(Exception):
     """Raised when roof, location, panel, or layout inputs changed after optimization."""
+
+
+class AiNotConfiguredError(Exception):
+    """Raised when the backend has no OpenAI API key."""
+
+
+class AiUnavailableError(Exception):
+    """Raised when the provider cannot complete an explanation safely."""
+
+
+class AiInvalidResponseError(Exception):
+    """Raised when provider output is incomplete or fails schema validation."""
+
+
+class AiRefusalError(Exception):
+    """Raised when the provider declines an explanation."""
+
+
+class AiRateLimitError(Exception):
+    """Raised when explanation requests are made too frequently."""

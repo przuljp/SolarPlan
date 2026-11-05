@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     pvgis_retry_backoff_seconds: float = 0.5
     pvgis_default_system_loss_percent: float = 14.0
     pvgis_max_system_loss_percent: float = 30.0
+    openai_api_key: SecretStr = SecretStr("")
+    openai_model: str = "gpt-5-mini"
+    openai_timeout_seconds: float = 60.0
+    openai_max_output_tokens: int = 4000
 
     model_config = SettingsConfigDict(
         env_file=".env",

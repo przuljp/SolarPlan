@@ -468,6 +468,23 @@ select { width: 100%; min-height: 3.1rem; padding: 0.72rem 2.4rem 0.72rem 0.85re
 .layout-return-link { justify-self: center; font-size: 0.78rem; }
 
 .simulation-report { margin-bottom: 1.5rem; padding: 1.25rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.ai-explanation-panel { margin: 1.5rem 0; padding: 1.5rem; min-width: 0; }
+.ai-explanation-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.ai-explanation-heading h2 { margin: 0; }
+.ai-explanation-panel p { max-width: 72ch; line-height: 1.65; overflow-wrap: anywhere; }
+.ai-explanation-heading p { margin: 0.5rem 0 0; color: var(--ink-soft); }
+.ai-explanation-heading .button { flex-shrink: 0; }
+.ai-explanation-scope, .ai-explanation-notice, .ai-explanation-attribution { color: var(--ink-soft); font-size: 0.85rem; }
+.ai-consumption-option { display: flex; align-items: flex-start; gap: 0.75rem; margin: 1rem 0; cursor: pointer; line-height: 1.5; }
+.ai-consumption-option input { width: 1.1rem; height: 1.1rem; min-height: 0; flex: 0 0 auto; margin: 0.2rem 0 0; accent-color: var(--ink); }
+.ai-consumption-option small { display: block; margin-top: 0.25rem; color: var(--ink-soft); font-weight: 400; }
+.ai-explanation-availability { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.5rem; }
+.ai-explanation-content { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.ai-explanation-content h3 { margin: 1.5rem 0 0.5rem; font-size: 1.15rem; }
+.ai-explanation-content p { margin: 0.5rem 0; }
+.ai-explanation-content ul { max-width: 72ch; margin: 0.5rem 0; padding-left: 1.25rem; line-height: 1.65; overflow-wrap: anywhere; }
+.ai-explanation-content li + li { margin-top: 0.5rem; }
+.ai-explanation-content .ai-explanation-attribution { margin-top: 1.5rem; }
 .simulation-report-row { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
 .simulation-report h2 { margin: 0; font-size: 1.35rem; }
 .simulation-report p { max-width: 65ch; margin: 0.4rem 0 0; color: var(--ink-soft); line-height: 1.6; }
@@ -480,6 +497,8 @@ select { width: 100%; min-height: 3.1rem; padding: 0.72rem 2.4rem 0.72rem 0.85re
   .layout-controls { position: static; }
 }
 @media (max-width: 720px) {
+  .ai-explanation-panel { padding: 1.1rem; }
+  .ai-explanation-heading { align-items: stretch; flex-direction: column; }
   .simulation-report-row { align-items: stretch; flex-direction: column; }
   .simulation-report-buttons .button { flex: 1; }
   .catalog-method-note, .catalog-filters { grid-template-columns: 1fr; }

@@ -85,6 +85,29 @@ export type EnergySimulation = {
   surface_results: SurfaceEnergyResult[];
   created_at: string;
 };
+export type AiExplanationInput = {
+  comparison_simulation_id?: string | null;
+  include_current_consumption: boolean;
+};
+export type AiExplanation = {
+  simulation_id: string;
+  comparison_simulation_id: string | null;
+  consumption_included: boolean;
+  consumption_updated_at: string | null;
+  content: {
+    summary: string;
+    production_insights: string[];
+    seasonal_insights: string;
+    consumption_insights: string | null;
+    comparison_insights: string | null;
+    limitations: string[];
+  };
+  model: string;
+  generated_at: string;
+  cached: boolean;
+  source: "openai";
+};
+
 export type EnergySimulationSummary = {
   id: string;
   project_id: string;

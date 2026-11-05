@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { api } from "../lib/api";
+import { AiExplanationPanel } from "../components/AiExplanationPanel";
 import type { SimulationComparisonItem } from "../types/api";
 
 const wholeNumber = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
@@ -52,6 +53,8 @@ export function SimulationComparisonPage() {
       <div aria-hidden="true">to</div>
       <article><span>Comparison · newer</span><strong>{dateTime.format(new Date(result.comparison.created_at))}</strong><small>{panelName(result.comparison)}</small></article>
     </section>
+
+    <AiExplanationPanel key={`${baselineId}:${comparisonId}`} projectId={projectId!} simulationId={baselineId} comparisonSimulationId={comparisonId} />
 
     <section className="content-panel simulation-metric-comparison">
       <header><h2>System-level differences</h2><p>Delta values show the newer result minus the baseline.</p></header>

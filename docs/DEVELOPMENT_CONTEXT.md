@@ -2,7 +2,7 @@
 
 > Stanje dokumentovano: 5. novembar 2026.
 > Grana: `main` (`origin/main`)
-> Prethodni commit: `84fe416 feat: compare simulations and refine system losses`; PDF/CSV paket je opisan ispod (tačan hash provjeriti kroz `git log`).
+> Prethodni commit: `d4f29bc feat: export saved simulations as PDF and CSV reports`; OpenAI paket je opisan ispod (tačan novi hash i stanje push-a provjeriti kroz `git log` i `git status`).
 
 Ovaj dokument služi za nastavak razvoja u novom Codex razgovoru. Tvrdnje su označene kao **implementirano**, **planirano** ili **treba provjeriti** gdje stanje nije moguće pouzdano utvrditi iz koda i dosadašnjeg razgovora.
 
@@ -122,6 +122,9 @@ Glavne frontend rute:
 
 ## 3. Najvažnije arhitektonske odluke
 
+- OpenAI nije alat za računanje. Strukturisano kvalitativno objašnjenje se validira; tekst sa ciframa se odbija, dok tačne numeričke vrijednosti ostaju u postojećem prikazu rezultata. Nema alata koji AI-ju dozvoljavaju izmjenu projekta.
+- AI objašnjenja se generišu samo na klik. Trenutna potrošnja uključuje se samo uz izbor korisnika; u poređenju se odnosi na baseline. Adresa, koordinate, imena i privatni identifikatori nisu dio spoljnog zahtjeva.
+
 - PDF/CSV se generišu na zahtjev iz nepromjenjivog snimka simulacije, uz postojeću provjeru vlasništva. Nema nove tabele, migracije ili trajnog skladištenja fajlova. Trenutna potrošnja nije dio tog snimka i zato nije uključena u izvještaj.
 
 - `repositories` su ekvivalent DAO sloju. Naziv je drugačiji, ali odgovornost je ista: izolacija upita prema bazi.
@@ -132,7 +135,7 @@ Glavne frontend rute:
 - Korisnik je izabrao **jedan zajednički model panela za sve plohe projekta**. Time zbirna snaga i poređenje rezultata ostaju razumljivi, a konfiguracija realistična za jednu instalaciju.
 - Raspored je deterministički, a ne AI-generisan. Isti ulaz mora dati isti položaj i broj panela.
 - PVGIS je autoritativni numerički izvor. Budući AI može objašnjavati rezultate i pozivati alate, ali ne smije izmišljati energetske proračune.
-- OpenAI integracija će biti serverski adapter koji dobija samo provjerene podatke projekta i sačuvane rezultate simulacije. API ključ ostaje isključivo u backend okruženju, a strukturisan odgovor omogućava predvidljiv prikaz u interfejsu i obradu odbijanja ili greške.
+- OpenAI integracija je serverski `httpx` adapter koji dobija provjerene energetske podatke i sačuvane rezultate simulacije. API ključ ostaje isključivo u backend okruženju, a strukturisan odgovor omogućava predvidljiv prikaz u interfejsu i obradu odbijanja ili greške.
 - AI objašnjenje ne mijenja krovove, rasporede, optimizacije ili numeričke rezultate. PVGIS, deterministički optimizer i podaci iz baze ostaju jedini autoritativni izvori tih vrijednosti.
 - PVGIS simulacija čuva snapshot umjesto samo veze na trenutne podatke. Stari rezultat tako ostaje reproduktivan i nakon izmjene krova ili panela.
 - Interfejs je namjerno jednostavan i vođen koracima. Dogovoreno je da jednostavnost nije mana dok su hijerarhija, status i sljedeća akcija jasni.
@@ -217,6 +220,8 @@ Sve rute imaju prefiks `/api/v1`.
 - `GET /projects/{project_id}/simulations/compare` — poređenje dva sačuvana snapshot-a preko `baseline_id` i `comparison_id`.
 - `GET /projects/{project_id}/simulations/{simulation_id}` — kompletan read-only snapshot jedne simulacije.
 - `GET /projects/{project_id}/simulations/{simulation_id}/report?format=pdf|csv` — preuzimanje izvještaja iz odabrane simulacije; podrazumijevani format je PDF, pristup je ograničen na vlasnika projekta.
+- `GET /ai/status` — autentifikovana provjera da li je backend ključ konfigurisan; ne provjerava pristup modelu niti izlaže ključ.
+- `POST /projects/{project_id}/simulations/{simulation_id}/explanation` — OpenAI objašnjenje odabranog snimka. Tijelo: opcioni `comparison_simulation_id` i `include_current_consumption` (podrazumijevano `false`). Brojčani ulazi se uvijek čitaju iz baze, uz provjeru vlasništva nad projektom i pripadnosti simulacija.
 
 ### Potrošnja
 
@@ -241,11 +246,12 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Potvrđeno u posljednjoj provjeri
 
-- Frontend: `npm test` — **17/17 testova prolazi**, uključujući autentifikovano preuzimanje oba formata, pending i greške sa ponovnim pokušajem.
+- Frontend: `npm test` — **23/23 testa prolaze**, uključujući AI unavailable/pending/error/success, eksplicitan klik i izbor potrošnje, poređenje i provjeru dostupnosti nakon konfiguracije.
 - Frontend: `npm run build` — produkcijski TypeScript/Vite build prolazi; postoji upozorenje da je glavni JS chunk veći od 500 kB.
-- Backend: kompletna pytest kolekcija — **133/133 testova prolazi**. Izvještaji pokrivaju PDF sadržaj i paginaciju, CSV encoding/escaping i zaštitu od formula, gubitke 0/9.5/14/30%, optimizer snimke i pristupne kontrole.
+- Backend: kompletna pytest kolekcija — **164/164 testa prolaze**. Novi AI testovi pokrivaju Responses payload/schema, `store: false`, greške i odbijanja, timeout, izlaz bez cifara, vlasništvo, cache/cooldown, parcijalnu potrošnju i poređenje bez razlika po plohama. OpenAI je mockovan; nema troška ili zavisnosti testova od ključa.
 - Backend: Ruff provjera `backend/app` i `backend/tests` prolazi.
 - Probni PDF je renderovan i vizuelno pregledan na obje stranice; stvarni API je provjeren za PDF i CSV uz privremene sintetičke podatke.
+- AI interfejs je vizuelno provjeren na desktopu i mobilnom ekranu kroz privremeni QA prikaz sa sintetičkim podacima i simuliranim odgovorom; ovo nije test kvaliteta odgovora stvarnog modela.
 
 ## 7. Poznati problemi i stvari koje treba provjeriti
 
@@ -256,6 +262,7 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Treba provjeriti
 
+- Stvarni end-to-end tok sa potrošnjom i poređenjem dvije simulacije. Osnovni stvarni OpenAI smoke test već je prošao sa sintetičkim energetskim podacima: backend je učitao ključ, `gpt-5-mini` je vratio HTTP 200 / `completed`, a odgovor je prošao aplikacijsku validaciju. Ključ i projektni podaci nisu ispisivani. Ponovljena ciljana provjera: 31/31 AI backend test prolazi.
 - Provjeriti puni end-to-end tok nakon čistog `docker compose up --build`: registracija → projekat → lokacija → više ploha → layout → PVGIS → potrošnja.
 - Provjeriti da li u lokalnoj razvojnoj bazi još postoji privremena trapezna test-ploha; to je podatak iz razgovora, ne dio verzionisanog koda.
 - Potvrditi ponašanje svih dev okruženja kod Vite hot reload-a; ranije je povremeno bio potreban restart frontend kontejnera i hard refresh.
@@ -264,8 +271,8 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Neposredni plan
 
-1. OpenAI objašnjenje provjerenih rezultata simulacije i poređenja, kroz serverski adapter i strukturisan odgovor; bez AI računanja proizvodnje.
-2. Završni end-to-end scenario i sigurnosno učvršćivanje.
+1. Završni end-to-end scenario, uključujući stvarna AI objašnjenja sa potrošnjom i poređenjem.
+2. Sigurnosno učvršćivanje i provjera rada pri deploymentu.
 3. Deployment i priprema demonstracije za diplomski rad.
 
 ### Kasniji plan
@@ -280,14 +287,18 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ## 9. Posljednji zadatak i odluka
 
-Posljednji implementirani paket su **PDF/CSV izvještaji iz odabrane sačuvane simulacije**, sa preuzimanjem iz analize i istorijskih detalja, testovima i vizuelnom provjerom PDF-a. Korisnik je zatražio commit i push nakon testiranja; stanje potvrditi kroz `git log`.
+Posljednji implementirani paket su **OpenAI objašnjenja sačuvane simulacije i poređenja**: backend adapter/servis/tanke rute, frontend panel i testovi. Koristi postojeći `httpx`, Responses API, JSON Schema i `store: false`. Osnovni model je `gpt-5-mini`, promjenjiv kroz backend konfiguraciju. Nema nove biblioteke ili migracije.
 
-Ranije je dogovoreno da se Open-Meteo ne implementira: kratkoročna prognoza ne doprinosi glavnom cilju dugoročnog planiranja, dok PVGIS ostaje autoritativni izvor tipične godišnje i mjesečne proizvodnje. OpenAI integracija ostaje sljedeća funkcionalnost za razumljivo objašnjenje već provjerenih rezultata, ne kao izvor energetskih proračuna.
+Prazno `SOLARPLAN_OPENAI_API_KEY=` je dodato u root `.env` i `.env.example`; ključ se Docker-om prosljeđuje samo backendu. Potrošnja je opcioni trenutni kontekst, nije istorijski snapshot. Objašnjenja se ne čuvaju u bazi niti ubacuju u PDF/CSV. Cache je vlasnički, do 128 stavki / sat, uz cooldown od deset sekundi i jedan aktivan zahtjev po korisniku; sve je lokalno procesu i resetuje se restartom. Distribuirano ograničavanje zahtjeva ostaje završni deployment zadatak.
+
+Korisnik je zatim dodao ključ u lokalni `.env`; backend ga je učitao. Stvarni OpenAI poziv sa sintetičkim podacima uspješno je završen (HTTP 200, `completed`, validiran strukturisani odgovor). Potrošnja i poređenje u ovom stvarnom testu nisu bili uključeni. Nakon provjere korisnik je zatražio commit i push ovog paketa.
+
+Ranije je dogovoreno da se Open-Meteo ne implementira: kratkoročna prognoza ne doprinosi glavnom cilju dugoročnog planiranja, dok PVGIS ostaje autoritativni izvor tipične godišnje i mjesečne proizvodnje. OpenAI tumači već provjerene rezultate.
 
 ## 10. Sljedeća tri konkretna koraka
 
-1. **AI objašnjenje rezultata** — backend OpenAI adapter koji strukturisano objašnjava izabranu simulaciju ili poređenje, bez mijenjanja izvornih vrijednosti.
-2. **Završna provjera** — end-to-end scenario od registracije do izvještaja, uz sigurnosno učvršćivanje.
+1. **Završna funkcionalna provjera** — end-to-end scenario od registracije do izvještaja, uključujući AI objašnjenja sa potrošnjom i poređenjem uz stvarni model.
+2. **Sigurnosno učvršćivanje** — provjera vlasništva i grešaka, produkcijske konfiguracije i distribuiranog ograničavanja AI zahtjeva.
 3. **Deployment i demonstracija** — reproducibilno pokretanje i priprema scenarija za odbranu diplomskog rada.
 
 ## Pravila za nastavak u novom razgovoru

@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { DEFAULT_SYSTEM_LOSS_PERCENT, isValidSystemLoss, SystemLossControl } from "../components/SystemLossControl";
 import { SimulationReportActions } from "../components/SimulationReportActions";
+import { AiExplanationPanel } from "../components/AiExplanationPanel";
 import { api, ApiError } from "../lib/api";
 import type { EnergyComparison, EnergySimulation } from "../types/api";
 
@@ -60,6 +61,7 @@ export function AnalysisResult({ simulation, comparisonContent }: { simulation: 
       <div><span>Specific yield</span><strong>{number.format(simulation.specific_yield_kwh_per_kwp)} <small>kWh/kWp</small></strong></div>
     </section>
 
+    <AiExplanationPanel key={`explanation-${simulation.id}`} projectId={simulation.project_id} simulationId={simulation.id} />
     {comparisonContent}
 
     <div className="analysis-grid">

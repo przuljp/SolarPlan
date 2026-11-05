@@ -1,4 +1,5 @@
 import type {
+  AiExplanation, AiExplanationInput,
   ConfigurationOptimization, ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, EnergySimulationSummary, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, OptimizationInput, OptimizationSelection, PanelLayout, SimulationComparison,
   Project, ProjectInput, ProjectLocation, ProjectLocationInput, RegisterInput,
   RoofSurface, RoofSurfaceInput, SolarPanel, TokenResponse, User,
@@ -36,6 +37,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  aiStatus: () => request<{ available: boolean }>("/ai/status"),
+  explainSimulation: (projectId: string, simulationId: string, input: AiExplanationInput) => request<AiExplanation>(`/projects/${projectId}/simulations/${simulationId}/explanation`, { method: "POST", body: JSON.stringify(input) }),
   downloadSimulationReport: async (projectId: string, simulationId: string, format: "pdf" | "csv") => {
     const headers = new Headers();
     const token = getAccessToken();
