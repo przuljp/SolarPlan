@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { DEFAULT_SYSTEM_LOSS_PERCENT, isValidSystemLoss, SystemLossControl } from "../components/SystemLossControl";
+import { SimulationReportActions } from "../components/SimulationReportActions";
 import { api, ApiError } from "../lib/api";
 import type { EnergyComparison, EnergySimulation } from "../types/api";
 
@@ -52,6 +53,7 @@ export function AnalysisResult({ simulation, comparisonContent }: { simulation: 
   const maximumSurface = Math.max(...simulation.surface_results.map((item) => item.annual_kwh), 1);
 
   return <>
+    <SimulationReportActions key={simulation.id} projectId={simulation.project_id} simulationId={simulation.id} />
     <section className="analysis-metrics" aria-label="Production summary">
       <div><span>Estimated annual production</span><strong>{number.format(simulation.annual_kwh)} <small>kWh/year</small></strong></div>
       <div><span>Installed system size</span><strong>{decimal.format(simulation.installed_kwp)} <small>kWp</small></strong></div>

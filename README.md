@@ -2,14 +2,14 @@
 
 SolarPlan is a full-stack web application for preliminary analysis and comparison of residential photovoltaic system configurations.
 
-The application will combine verified solar-module specifications, deterministic polygon-aware roof-layout optimization, PVGIS energy estimates, weather context, and household electricity consumption. V1 focuses on transparent technical and energy analysis; pricing, financial savings, and ROI are explicitly outside its scope.
+The application combines verified solar-module specifications, deterministic polygon-aware roof-layout optimization, PVGIS energy estimates, and household electricity consumption. V1 focuses on transparent technical and energy analysis; pricing, financial savings, and ROI are explicitly outside its scope.
 
 ## Technology stack
 
 - Frontend: React, TypeScript, Vite, React Router, and TanStack Query
 - Backend: Python, FastAPI, Pydantic, SQLAlchemy, and Alembic
 - Database: PostgreSQL
-- Integrations: PVGIS, Open-Meteo, geocoding, and an optional OpenAI adapter
+- Integrations: PVGIS, geocoding, and a planned OpenAI adapter for explaining verified energy results
 - Tooling: Docker Compose, Pytest, Vitest, and GitHub Actions
 
 ## Repository structure
@@ -72,5 +72,11 @@ npm test
 
 ## Current status
 
-The authenticated project workflow, map-based location selection, multi-surface rectangular/trapezoidal roof modeling, verified panel catalog, polygon-aware layout engine, and PVGIS backend simulation foundation are in place. The next increment adds the production-analysis frontend and household consumption comparison.
+The authenticated project workflow, map-based location selection, multi-surface rectangular/trapezoidal roof modeling, verified panel catalog, polygon-aware layouts, PVGIS analysis, household consumption comparison, configuration optimizer, simulation history, and two-simulation comparison are implemented.
+
+Saved simulations can be exported from Production Analysis or Simulation Details using **Download PDF** and **Download CSV**. Reports include the saved system inputs, panels, actual system losses, annual/monthly production, roof contributions, calculation date, and limitations. Exports use the immutable simulation snapshot; they do not request PVGIS again or include the current consumption profile.
+
+The authenticated endpoint is `GET /api/v1/projects/{project_id}/simulations/{simulation_id}/report?format=pdf` (or `format=csv`). Files are generated on demand without a report table or stored files. PDF generation uses ReportLab; CSV is UTF-8 with a BOM for spreadsheet compatibility and neutralizes formulas in user-supplied text. Rebuild the backend image after pulling this feature to install the new dependency: `docker compose up -d --build backend`.
+
+Next: OpenAI explanations of verified energy results, followed by final end-to-end verification and deployment.
 

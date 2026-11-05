@@ -36,6 +36,25 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  downloadSimulationReport: async (projectId: string, simulationId: string, format: "pdf" | "csv") => {
+    const headers = new Headers();
+    const token = getAccessToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const response = await fetch(`${API_URL}/projects/${projectId}/simulations/${simulationId}/report?format=${format}`, { headers });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as ErrorBody | null;
+      throw new ApiError(errorMessage(body, "The report could not be downloaded. Please try again."), response.status);
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `solarplan-${simulationId}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
   register: (input: RegisterInput) => request<User>("/auth/register", { method: "POST", body: JSON.stringify(input) }),
   login: (input: LoginInput) => request<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify(input) }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),

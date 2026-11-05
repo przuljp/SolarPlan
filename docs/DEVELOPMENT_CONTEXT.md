@@ -1,8 +1,8 @@
 # SolarPlan — razvojni kontekst
 
-> Stanje dokumentovano: 4. novembar 2026.
+> Stanje dokumentovano: 5. novembar 2026.
 > Grana: `main` (`origin/main`)
-> Posljednji commit: `6a62307 feat: add configuration optimizer and simulation history`
+> Prethodni commit: `84fe416 feat: compare simulations and refine system losses`; PDF/CSV paket je opisan ispod (tačan hash provjeriti kroz `git log`).
 
 Ovaj dokument služi za nastavak razvoja u novom Codex razgovoru. Tvrdnje su označene kao **implementirano**, **planirano** ili **treba provjeriti** gdje stanje nije moguće pouzdano utvrditi iz koda i dosadašnjeg razgovora.
 
@@ -112,7 +112,17 @@ Glavne frontend rute:
 - Poređenje koristi samo sačuvane snapshot-e, ne poziva PVGIS i ne mijenja projekat ili bazu.
 - Po dogovoru se ne prikazuju razlike po pojedinačnim krovnim plohama.
 
+### PDF/CSV izvještaji
+
+- Preuzimanje iz Production Analysis i detalja bilo koje istorijske simulacije.
+- PDF: podaci o lokaciji i izvoru, stvarni sistemski gubici, godišnja proizvodnja, snaga i specifični prinos, mjesečni grafikon i tabela, paneli i doprinosi ploha, datum i ograničenja procjene.
+- CSV: jedinstvene kolone `section`, `roof_surface_id`, `name`, `metric`, `month`, `value`, `unit`; projektne i mjesečne vrijednosti, podaci o panelima i pojedinačnim plohama. UTF-8 BOM za Excel i zaštita tekstualnih ćelija od tumačenja kao formula.
+- Backend `report_service` koristi ReportLab za PDF, Python `csv` za CSV i postojeći servis za autorizovano čitanje simulacije; frontend zajedničku komponentu `SimulationReportActions` sa pending/error stanjima.
+- Nema novog PVGIS poziva, ponovnog obračuna gubitaka, migracije baze ili trajnog čuvanja fajlova.
+
 ## 3. Najvažnije arhitektonske odluke
+
+- PDF/CSV se generišu na zahtjev iz nepromjenjivog snimka simulacije, uz postojeću provjeru vlasništva. Nema nove tabele, migracije ili trajnog skladištenja fajlova. Trenutna potrošnja nije dio tog snimka i zato nije uključena u izvještaj.
 
 - `repositories` su ekvivalent DAO sloju. Naziv je drugačiji, ali odgovornost je ista: izolacija upita prema bazi.
 - `/api/v1` omogućava kasnije mijenjanje API-ja bez lomljenja postojećih klijenata.
@@ -122,6 +132,8 @@ Glavne frontend rute:
 - Korisnik je izabrao **jedan zajednički model panela za sve plohe projekta**. Time zbirna snaga i poređenje rezultata ostaju razumljivi, a konfiguracija realistična za jednu instalaciju.
 - Raspored je deterministički, a ne AI-generisan. Isti ulaz mora dati isti položaj i broj panela.
 - PVGIS je autoritativni numerički izvor. Budući AI može objašnjavati rezultate i pozivati alate, ali ne smije izmišljati energetske proračune.
+- OpenAI integracija će biti serverski adapter koji dobija samo provjerene podatke projekta i sačuvane rezultate simulacije. API ključ ostaje isključivo u backend okruženju, a strukturisan odgovor omogućava predvidljiv prikaz u interfejsu i obradu odbijanja ili greške.
+- AI objašnjenje ne mijenja krovove, rasporede, optimizacije ili numeričke rezultate. PVGIS, deterministički optimizer i podaci iz baze ostaju jedini autoritativni izvori tih vrijednosti.
 - PVGIS simulacija čuva snapshot umjesto samo veze na trenutne podatke. Stari rezultat tako ostaje reproduktivan i nakon izmjene krova ili panela.
 - Interfejs je namjerno jednostavan i vođen koracima. Dogovoreno je da jednostavnost nije mana dok su hijerarhija, status i sljedeća akcija jasni.
 - Nakon čuvanja korisnik treba biti prirodno usmjeren na sljedeći korak, a ne ostavljen na istoj formi bez jasnog nastavka.
@@ -204,6 +216,7 @@ Sve rute imaju prefiks `/api/v1`.
 - `GET /projects/{project_id}/simulations/latest` — posljednja simulacija.
 - `GET /projects/{project_id}/simulations/compare` — poređenje dva sačuvana snapshot-a preko `baseline_id` i `comparison_id`.
 - `GET /projects/{project_id}/simulations/{simulation_id}` — kompletan read-only snapshot jedne simulacije.
+- `GET /projects/{project_id}/simulations/{simulation_id}/report?format=pdf|csv` — preuzimanje izvještaja iz odabrane simulacije; podrazumijevani format je PDF, pristup je ograničen na vlasnika projekta.
 
 ### Potrošnja
 
@@ -228,17 +241,18 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Potvrđeno u posljednjoj provjeri
 
-- Frontend: `npm test -- --run` — **14/14 testova prolazi**.
+- Frontend: `npm test` — **17/17 testova prolazi**, uključujući autentifikovano preuzimanje oba formata, pending i greške sa ponovnim pokušajem.
 - Frontend: `npm run build` — produkcijski TypeScript/Vite build prolazi; postoji upozorenje da je glavni JS chunk veći od 500 kB.
-- Backend: kompletna pytest kolekcija — **115/115 testova prolazi**.
-- Backend: Ruff provjera `backend/app`, `backend/tests` i `backend/alembic` prolazi.
+- Backend: kompletna pytest kolekcija — **133/133 testova prolazi**. Izvještaji pokrivaju PDF sadržaj i paginaciju, CSV encoding/escaping i zaštitu od formula, gubitke 0/9.5/14/30%, optimizer snimke i pristupne kontrole.
+- Backend: Ruff provjera `backend/app` i `backend/tests` prolazi.
+- Probni PDF je renderovan i vizuelno pregledan na obje stranice; stvarni API je provjeren za PDF i CSV uz privremene sintetičke podatke.
 
 ## 7. Poznati problemi i stvari koje treba provjeriti
 
 ### Poznato
 
 - Legacy `RoofConfiguration` kod i tabela još postoje uz novi model `RoofSurface`.
-- README opis sljedećeg koraka je djelimično zastario jer su Production Analysis UI i ručni unos potrošnje već implementirani.
+- Na mobilnom prikazu detalja simulacije uočeno je horizontalno prelivanje postojećeg grafikona/analysis grida. Novi PDF/CSV kontrolni red staje u širinu ekrana; postojeći grid treba zasebno doraditi.
 
 ### Treba provjeriti
 
@@ -250,30 +264,31 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Neposredni plan
 
-1. Open-Meteo integracija i kratkoročna procjena proizvodnje.
-2. PDF/CSV izvještaji iz sačuvane simulacije.
-3. OpenAI objašnjenja rezultata, bez preuzimanja numeričkog proračuna od PVGIS-a.
+1. OpenAI objašnjenje provjerenih rezultata simulacije i poređenja, kroz serverski adapter i strukturisan odgovor; bez AI računanja proizvodnje.
+2. Završni end-to-end scenario i sigurnosno učvršćivanje.
+3. Deployment i priprema demonstracije za diplomski rad.
 
 ### Kasniji plan
 
-- PDF/CSV izvještaji.
-- OpenAI adapter za objašnjenje rezultata, savjetnika i opcionalnu obradu računa uz saglasnost i validaciju; AI ne radi osnovni numerički proračun.
-- Upload računa, kontrolisano izdvajanje potrošnje i sigurno čišćenje fajlova.
+- Opcionalna obrada računa uz izričitu saglasnost, validaciju izdvojenih vrijednosti i sigurno čišćenje fajlova.
 - Dodatno sigurnosno učvršćivanje, rate limiting, CI/deployment i end-to-end demonstracioni scenario za diplomski rad.
 
 ### Van trenutnog obima
 
+- Kratkoročna vremenska prognoza i Open-Meteo integracija: SolarPlan je alat za dugoročno planiranje, a PVGIS već daje tipičnu godišnju i mjesečnu procjenu prema koordinatama projekta.
 - Finansijski ROI i cijene sistema, baterije, admin panel, 3D/LiDAR, automatsko prepoznavanje krova sa satelita, precizno sjenčenje i zvanična statička/elektrotehnička verifikacija.
 
-## 9. Posljednji zadatak
+## 9. Posljednji zadatak i odluka
 
-U trenutnom, još necommitovanom radnom stablu posljednji paketi su **poređenje dvije sačuvane simulacije** i **unaprijeđeno podešavanje sistemskih gubitaka**. Gubici ostaju direktan PVGIS parametar, bez drugog umanjenja rezultata; default je 14%, a ručni ulaz 0–30% dostupan je tek kroz napredno podešavanje.
+Posljednji implementirani paket su **PDF/CSV izvještaji iz odabrane sačuvane simulacije**, sa preuzimanjem iz analize i istorijskih detalja, testovima i vizuelnom provjerom PDF-a. Korisnik je zatražio commit i push nakon testiranja; stanje potvrditi kroz `git log`.
+
+Ranije je dogovoreno da se Open-Meteo ne implementira: kratkoročna prognoza ne doprinosi glavnom cilju dugoročnog planiranja, dok PVGIS ostaje autoritativni izvor tipične godišnje i mjesečne proizvodnje. OpenAI integracija ostaje sljedeća funkcionalnost za razumljivo objašnjenje već provjerenih rezultata, ne kao izvor energetskih proračuna.
 
 ## 10. Sljedeća tri konkretna koraka
 
-1. **Open-Meteo prognoza** — kratkoročni vremenski kontekst i procjena proizvodnje, jasno odvojena od tipične godišnje PVGIS simulacije.
-2. **Izvoz rezultata** — PDF/CSV izvještaj iz izabrane nepromjenjive simulacije.
-3. **AI objašnjenje** — OpenAI adapter koji tumači provjerene rezultate, ali ne računa niti mijenja PVGIS vrijednosti.
+1. **AI objašnjenje rezultata** — backend OpenAI adapter koji strukturisano objašnjava izabranu simulaciju ili poređenje, bez mijenjanja izvornih vrijednosti.
+2. **Završna provjera** — end-to-end scenario od registracije do izvještaja, uz sigurnosno učvršćivanje.
+3. **Deployment i demonstracija** — reproducibilno pokretanje i priprema scenarija za odbranu diplomskog rada.
 
 ## Pravila za nastavak u novom razgovoru
 

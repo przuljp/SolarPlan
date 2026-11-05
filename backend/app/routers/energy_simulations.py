@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from app.core.exceptions import (
     EnergySimulationNotFoundError,
@@ -18,6 +18,7 @@ from app.schemas.energy_simulation import (
     EnergySimulationSummaryRead,
 )
 from app.services import energy_simulation_service
+from app.services.report_service import ReportFormat, export_simulation
 
 router = APIRouter(prefix="/projects/{project_id}/simulations", tags=["energy simulations"])
 
@@ -137,3 +138,34 @@ async def read_energy_simulation(
         )
     except (ProjectNotFoundError, EnergySimulationNotFoundError) as error:
         raise simulation_error(error) from error
+
+
+@router.get(
+    "/{simulation_id}/report",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}, "text/csv": {}}}},
+)
+async def download_simulation_report(
+    project_id: UUID,
+    simulation_id: UUID,
+    current_user: CurrentUserDependency,
+    session: SessionDependency,
+    format: ReportFormat = "pdf",
+):
+    try:
+        content = await export_simulation(
+            session, project_id, simulation_id, current_user.id, format
+        )
+    except (ProjectNotFoundError, EnergySimulationNotFoundError) as error:
+        raise simulation_error(error) from error
+    return Response(
+        content=content,
+        media_type="application/pdf" if format == "pdf" else "text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="solarplan-{simulation_id}.{format}"'
+            ),
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

@@ -467,12 +467,21 @@ select { width: 100%; min-height: 3.1rem; padding: 0.72rem 2.4rem 0.72rem 0.85re
 .layout-empty p { max-width: 44ch; color: var(--ink-soft); line-height: 1.55; }
 .layout-return-link { justify-self: center; font-size: 0.78rem; }
 
+.simulation-report { margin-bottom: 1.5rem; padding: 1.25rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.simulation-report-row { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.simulation-report h2 { margin: 0; font-size: 1.35rem; }
+.simulation-report p { max-width: 65ch; margin: 0.4rem 0 0; color: var(--ink-soft); line-height: 1.6; }
+.simulation-report-buttons { display: flex; flex-wrap: wrap; gap: 0.75rem; flex-shrink: 0; }
+.simulation-report .form-error { margin-top: 1rem; color: var(--danger); }
+
 @media (max-width: 1050px) {
   .panel-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .layout-workbench { grid-template-columns: 1fr; }
   .layout-controls { position: static; }
 }
 @media (max-width: 720px) {
+  .simulation-report-row { align-items: stretch; flex-direction: column; }
+  .simulation-report-buttons .button { flex: 1; }
   .catalog-method-note, .catalog-filters { grid-template-columns: 1fr; }
   .panel-catalog { grid-template-columns: 1fr; }
   .catalog-count { display: none; }
