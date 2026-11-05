@@ -53,7 +53,15 @@ describe("AI result explanations", () => {
     expect(JSON.parse(options.body)).toEqual({ comparison_simulation_id: null, include_current_consumption: false });
     expect(screen.getByRole("heading", { name: "Seasonal pattern" })).toBeInTheDocument();
     expect(screen.getByText(/AI-generated explanation/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Explanation ready" })).toBeDisabled();
+    const hide = screen.getByRole("button", { name: "Hide explanation" });
+    expect(hide).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(hide);
+    expect(screen.getByText(example.content.summary)).not.toBeVisible();
+    const show = screen.getByRole("button", { name: "Show explanation" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(show);
+    expect(screen.getByText(example.content.summary)).toBeVisible();
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole("heading", { name: "Current household consumption" })).not.toBeInTheDocument();
   });
 

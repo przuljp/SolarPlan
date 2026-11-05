@@ -9,6 +9,8 @@ export function AiExplanationPanel({ projectId, simulationId, comparisonSimulati
   comparisonSimulationId?: string;
 }) {
   const titleId = useId();
+  const contentId = useId();
+  const [collapsed, setCollapsed] = useState(false);
   const [includeConsumption, setIncludeConsumption] = useState(false);
   const status = useQuery({
     queryKey: ["ai", "status"], queryFn: api.aiStatus, staleTime: 30_000, retry: false,
@@ -26,9 +28,10 @@ export function AiExplanationPanel({ projectId, simulationId, comparisonSimulati
     <div className="ai-explanation-heading">
       <div><h2 id={titleId}>Understand these results</h2><p>Get a plain-language explanation of {comparisonSimulationId ? "the differences between these saved simulations" : "this saved simulation"}.</p></div>
       <button className="button button-secondary" type="button"
-        disabled={!status.data?.available || explanation.isPending || Boolean(result)}
-        onClick={() => explanation.mutate()}>
-        {explanation.isPending ? "Explaining…" : result ? "Explanation ready" : "Explain results"}
+        disabled={explanation.isPending || (!result && !status.data?.available)}
+        aria-expanded={result ? !collapsed : undefined} aria-controls={result ? contentId : undefined}
+        onClick={() => result ? setCollapsed((hidden) => !hidden) : explanation.mutate()}>
+        {explanation.isPending ? "Explaining…" : result ? collapsed ? "Show explanation" : "Hide explanation" : "Explain results"}
       </button>
     </div>
 
@@ -47,7 +50,7 @@ export function AiExplanationPanel({ projectId, simulationId, comparisonSimulati
     </div>}
     {explanation.isPending && <p className="ai-explanation-notice" role="status">Preparing your explanation. The saved calculation stays available below.</p>}
     {explanation.isError && <p className="form-error" role="alert">{explanation.error instanceof Error ? explanation.error.message : "The explanation could not be generated. Please try again."}</p>}
-    {result && <div className="ai-explanation-content" aria-live="polite">
+    {result && <div id={contentId} className="ai-explanation-content" hidden={collapsed} aria-live="polite">
       <p className="ai-explanation-summary">{result.content.summary}</p>
       <h3>Production</h3>
       <ul>{result.content.production_insights.map((text, index) => <li key={index}>{text}</li>)}</ul>

@@ -38,9 +38,14 @@ from app.services.ai_explanation_service import ExplanationService
 def narrative(**changes):
     return ExplanationContent(
         **{
-            "summary": "This saved configuration provides a preliminary production estimate.",
-            "production_insights": ["Installed power describes the rated system capacity."],
-            "seasonal_insights": "The saved monthly pattern varies through the year.",
+            "summary": (
+                "This system has {{simulation.installed_kwp}} "
+                "and produces {{simulation.annual_kwh}} annually."
+            ),
+            "production_insights": ["Losses of {{simulation.system_loss_percent}} are included."],
+            "seasonal_insights": (
+                "The first saved month produces {{simulation.monthly_results.0.energy_kwh}}."
+            ),
             "consumption_insights": None,
             "comparison_insights": None,
             "limitations": ["Actual weather and nearby shading can affect production."],
@@ -163,9 +168,8 @@ async def test_refusal_is_not_presented_as_an_explanation():
             await OpenAiClient(config()).explain({}, client=http)
 
 
-def test_numeric_or_unexpected_model_fields_are_rejected():
-    with pytest.raises(ValidationError):
-        narrative(summary="Production will be 9000 kWh.")
+def test_resolved_numbers_are_allowed_but_unexpected_fields_are_rejected():
+    assert narrative(summary="Saved production is 9000 kWh.").summary
     with pytest.raises(ValidationError):
         ExplanationContent.model_validate({**narrative().model_dump(), "annual_kwh": 9000})
 
@@ -297,7 +301,9 @@ async def test_partial_consumption_is_optional_and_uses_selected_simulation(
     read = AsyncMock(return_value=profile)
     monkeypatch.setattr(consumption_repository, "get_by_project_id", read)
     client = fake_client(
-        narrative(consumption_insights="Only the supplied household months can be compared.")
+        narrative(
+            consumption_insights="Known consumption months: {{consumption.known_months}}."
+        )
     )
     # Real service normally receives an ORM object with JSON dictionaries.
     saved = SimpleNamespace(**simulation.model_dump(mode="json"))
@@ -316,7 +322,7 @@ async def test_partial_consumption_is_optional_and_uses_selected_simulation(
     assert facts["annual_consumption_kwh"] is None
     assert facts["known_months"] == 1
     assert facts["monthly_comparison"][1]["consumption_kwh"] is None
-    assert facts["annual_production_kwh"] == simulation.annual_kwh
+    assert "annual_production_kwh" not in facts  # Not a subtotal for the known months.
     assert "consumption_profile_id" not in facts
 
 
@@ -341,7 +347,7 @@ async def test_comparison_excludes_roof_differences(monkeypatch, simulation):
         energy_simulation_repository, "get_by_ids", AsyncMock(return_value=[baseline, other])
     )
     client = fake_client(
-        narrative(comparison_insights="The saved configurations have matching production.")
+        narrative(comparison_insights="The annual difference is {{comparison.deltas.annual_kwh}}.")
     )
     result = await ExplanationService(client).explain(
         AsyncMock(),
@@ -434,7 +440,10 @@ async def test_successful_route_and_status_expose_no_credentials(monkeypatch, si
         )
         assert response.status_code == 200
         assert response.headers["cache-control"] == "no-store"
-        assert response.json()["content"]["summary"] == narrative().summary
+        assert (
+            response.json()["content"]["summary"]
+            == "This system has 4.20 kWp and produces 799.50 kWh annually."
+        )
         invalid = await c.post(
             f"/api/v1/projects/{simulation.project_id}/simulations/{simulation.id}/explanation",
             json={"annual_kwh": 9999},

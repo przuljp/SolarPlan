@@ -1,8 +1,8 @@
 # SolarPlan — razvojni kontekst
 
-> Stanje dokumentovano: 5. novembar 2026.
+> Stanje dokumentovano: 6. novembar 2026.
 > Grana: `main` (`origin/main`)
-> Posljednji objavljeni commit: `4aa856f feat: explain saved energy results with OpenAI`. Naknadne QA ispravke opisane su u `docs/USER_FLOW_QA.md`; stanje commit-a provjeriti kroz `git status`.
+> Posljednji objavljeni commit: `532ccae fix: preserve saved layouts and refine responsive workflows`. QA i responzivne ispravke su commitovane i pushane na `origin/main`; naknadno stanje provjeriti kroz `git status`.
 
 Ovaj dokument služi za nastavak razvoja u novom Codex razgovoru. Tvrdnje su označene kao **implementirano**, **planirano** ili **treba provjeriti** gdje stanje nije moguće pouzdano utvrditi iz koda i dosadašnjeg razgovora.
 
@@ -122,7 +122,7 @@ Glavne frontend rute:
 
 ## 3. Najvažnije arhitektonske odluke
 
-- OpenAI nije alat za računanje. Strukturisano kvalitativno objašnjenje se validira; tekst sa ciframa se odbija, dok tačne numeričke vrijednosti ostaju u postojećem prikazu rezultata. Nema alata koji AI-ju dozvoljavaju izmjenu projekta.
+- OpenAI nije alat za računanje. Nakon primjedbe da su objašnjenja generička, uvedene su reference `{{path}}` na backendov `display_values` skup. Servis ih zamjenjuje stvarnim brojevima i jedinicama; odbija nepoznate reference, proizvoljne cifre i sažetak bez snage/godišnje proizvodnje. Sezonski dio mora referencirati mjesečne rezultate, a potrošnja/poređenje svoj kontekst. Konačno objašnjenje sadrži konkretne brojke. Provjerava se porijeklo brojeva, ne garantuje semantička tačnost svake AI tvrdnje. Nema alata koji AI-ju dozvoljavaju izmjenu projekta.
 - AI objašnjenja se generišu samo na klik. Trenutna potrošnja uključuje se samo uz izbor korisnika; u poređenju se odnosi na baseline. Adresa, koordinate, imena i privatni identifikatori nisu dio spoljnog zahtjeva.
 
 - PDF/CSV se generišu na zahtjev iz nepromjenjivog snimka simulacije, uz postojeću provjeru vlasništva. Nema nove tabele, migracije ili trajnog skladištenja fajlova. Trenutna potrošnja nije dio tog snimka i zato nije uključena u izvještaj.
@@ -246,9 +246,9 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Potvrđeno u posljednjoj provjeri
 
-- Frontend: `npm test` — **27/27 testova prolazi**, uključujući AI stanja, sačuvani broj/orijentaciju rasporeda, grešku pri učitavanju i čišćenje privatnog cache-a između sesija.
+- Frontend: `npm test` — **29/29 testova prolazi**, uključujući AI stanja i sklapanje bez dodatnog zahtjeva, prikaz/skrivanje lozinke na prijavi i registraciji, sačuvani raspored i izolaciju cache-a između sesija.
 - Frontend: `npm run build` — produkcijski TypeScript/Vite build prolazi; postoji upozorenje da je glavni JS chunk veći od 500 kB.
-- Backend: kompletna pytest kolekcija — **164/164 testa prolaze**. Novi AI testovi pokrivaju Responses payload/schema, `store: false`, greške i odbijanja, timeout, izlaz bez cifara, vlasništvo, cache/cooldown, parcijalnu potrošnju i poređenje bez razlika po plohama. OpenAI je mockovan; nema troška ili zavisnosti testova od ključa.
+- Backend: kompletna pytest kolekcija — **171/171 test prolazi**. AI testovi pokrivaju strukturisani odgovor, reference i formatiranje stvarnih brojeva, odbijanje nepoznatih referenci i proizvoljnih cifara, vlasništvo, cache/cooldown, parcijalnu potrošnju i poređenje bez razlika po plohama. OpenAI je mockovan u automatizovanim testovima.
 - Backend: Ruff provjera `backend/app` i `backend/tests` prolazi.
 - Probni PDF je renderovan i vizuelno pregledan na obje stranice; stvarni API je provjeren za PDF i CSV uz privremene sintetičke podatke.
 - AI interfejs je vizuelno provjeren na desktopu i mobilnom ekranu kroz privremeni QA prikaz sa sintetičkim podacima i simuliranim odgovorom; ovo nije test kvaliteta odgovora stvarnog modela.
@@ -281,12 +281,30 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 - Opcionalna obrada računa uz izričitu saglasnost, validaciju izdvojenih vrijednosti i sigurno čišćenje fajlova.
 - Dodatno sigurnosno učvršćivanje, rate limiting, CI/deployment i end-to-end demonstracioni scenario za diplomski rad.
 
+### Nove korisničke ideje — status implementacije
+
+Korisnik je prvo tražio evidenciju pet ideja, a zatim implementaciju stavki 4 i 5. Stavke 1–3 ostaju za narednu sesiju, po dogovoru.
+
+1. **Potvrda email adrese** — potvrditi da korisnik ima pristup adresi navedenoj pri registraciji. Servis za slanje emailova i pravila pristupa prije potvrde još treba dogovoriti.
+2. **Forgot password** — omogućiti pokretanje oporavka pristupa i bezbjedno postavljanje nove lozinke putem emaila. Detalje tokena, rok važenja i slanje poruka definisati pri implementaciji.
+3. **Delete account** — dodati korisničku sekciju za brisanje sopstvenog naloga. Prije implementacije definisati potvrdu identiteta, tretman projekata i povezanih podataka te da li je brisanje trajno ili postoji period oporavka.
+4. **Show/hide password — implementirano** na prijavi i registraciji. Lozinka je početno skrivena; Show/Hide mijenja samo tip inputa, čuva unesenu vrijednost i ne šalje formu. Prelazak između formi vraća skriven prikaz.
+5. **Sakrij/prikaži AI objašnjenje — implementirano** u zajedničkom `AiExplanationPanel`, uključujući poređenje. Hide/Show explanation sklapa i otvara već dobijeni odgovor bez novog OpenAI poziva. Dugme ima `aria-expanded` i vezu sa kontrolisanim sadržajem.
+
+UI i nazivi kontrola ostaju na engleskom; korisniku se razvoj objašnjava na srpskom. Redoslijed preostale tri funkcionalnosti još treba dogovoriti.
+
 ### Van trenutnog obima
 
 - Kratkoročna vremenska prognoza i Open-Meteo integracija: SolarPlan je alat za dugoročno planiranje, a PVGIS već daje tipičnu godišnju i mjesečnu procjenu prema koordinatama projekta.
 - Finansijski ROI i cijene sistema, baterije, admin panel, 3D/LiDAR, automatsko prepoznavanje krova sa satelita, precizno sjenčenje i zvanična statička/elektrotehnička verifikacija.
 
 ## 9. Posljednji zadatak i odluka
+
+Najnoviji UI paket: Show/Hide password na prijavi/registraciji i sklapanje AI objašnjenja bez dodatnog zahtjeva. Frontend testovi 29/29 i build prolaze; prikaz provjeren u browseru na mobilnoj širini. Korisnik je tražio commit/push sada, a potvrdu emaila, forgot password i delete account ostavlja za narednu sesiju.
+
+Završna potvrda ovog paketa: 171/171 backend test prolazi i nakon dorade parcijalne potrošnje, Ruff prolazi, stvarni pojedinačni odgovor navodi provjerene mjesečne bilanse bez pogrešnog godišnjeg podzbira. Backend je restartovan radi učitavanja novog koda i health endpoint vraća 200. Privremena smoke skripta je uklonjena; aplikacijski podaci nisu mijenjani.
+
+Najnoviji zadatak: projektno specifična AI objašnjenja umjesto opštih definicija. Promijenjeni su prompt, validacija i cache verzija (`solarplan-explanation-v2-evidence`); dodan je `services/explanation_evidence.py`. API i frontend format ostaju kompatibilni, bez biblioteka ili migracije. Potrošnja je i dalje opcioni trenutni profil, a poređenje ostaje zbirno bez razlika po plohama. Redundantna godišnja proizvodnja uklonjena je iz AI konteksta potrošnje da se ne zamijeni sa podzbirom poznatih mjeseci. Ciljani testovi: 38 prolazi; kompletni backend: 171 prolazi prije posljednje male dorade konteksta. Stvarni sintetički testovi pojedinačne simulacije i poređenja sa potrošnjom dali su projektno specifične brojeve; jedan pojedinačni pokušaj bio je odbijen validacijom prije uspješnog ponavljanja. Nove ideje za nalog i sklapanje AI prikaza iz odjeljka 8 ostaju planirane.
 
 Posljednji zadatak je **završna provjera korisničkog toka i ciljane ispravke**: učitavanje sačuvanog rasporeda, izolacija cache-a između sesija, mobilni grid/tooltip, jasna poruka o snapshot-u i Vite polling. Detalji su u `docs/USER_FLOW_QA.md`. Prethodni paket su OpenAI objašnjenja preko Responses API-ja, postojećeg `httpx` klijenta i `store: false`; model je `gpt-5-mini`. Nema nove biblioteke ili migracije.
 
@@ -298,7 +316,7 @@ Ranije je dogovoreno da se Open-Meteo ne implementira: kratkoročna prognoza ne 
 
 ## 10. Sljedeća tri konkretna koraka
 
-1. **Pregled i verzionisanje QA ispravki** — provjera diff-a, pa commit/push na zahtjev korisnika; lokalni tok je provjeren i dokumentovan.
+1. **Odabir narednog funkcionalnog paketa** — QA ispravke su već pushane (`532ccae`); novih pet ideja je zabilježeno u odjeljku 8, a njihov redoslijed implementacije još treba dogovoriti.
 2. **Sigurnosno učvršćivanje** — provjera vlasništva i grešaka, produkcijske konfiguracije i distribuiranog ograničavanja AI zahtjeva.
 3. **Deployment i demonstracija** — reproducibilno pokretanje i priprema scenarija za odbranu diplomskog rada.
 

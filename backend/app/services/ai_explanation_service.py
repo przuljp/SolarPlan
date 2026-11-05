@@ -13,8 +13,9 @@ from app.repositories import consumption_repository
 from app.schemas.ai_explanation import ExplanationRead, ExplanationRequest
 from app.schemas.energy_simulation import EnergySimulationRead
 from app.services import energy_comparison_service, energy_simulation_service
+from app.services.explanation_evidence import evidence_values, resolve_evidence
 
-PROMPT_VERSION = "solarplan-explanation-v1"
+PROMPT_VERSION = "solarplan-explanation-v2-evidence"
 CACHE_TTL_SECONDS = 3600
 REQUEST_INTERVAL_SECONDS = 10
 MAX_CACHE_ENTRIES = 128
@@ -93,11 +94,15 @@ class ExplanationService:
                         "project_id",
                         "simulation_id",
                         "consumption_profile_id",
+                        "annual_production_kwh",
                     }
                 )
                 consumption_updated_at = profile.updated_at
         if not self.client.available:
             raise AiNotConfiguredError
+
+        values = evidence_values(facts)
+        facts["display_values"] = values
 
         canonical = json.dumps(
             {
@@ -138,6 +143,7 @@ class ExplanationService:
                 content.comparison_insights is not None
             ) != (facts["comparison"] is not None):
                 raise AiInvalidResponseError
+            content = resolve_evidence(content, values)
             result = ExplanationRead(
                 simulation_id=simulation_id,
                 comparison_simulation_id=request.comparison_simulation_id,

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
@@ -13,6 +13,9 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const location = useLocation();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const passwordId = useId();
+  useEffect(() => setPasswordVisible(false), [mode]);
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -67,11 +70,14 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
               <label>Full name<input name="full_name" autoComplete="name" minLength={2} maxLength={120} required /></label>
             )}
             <label>Email address<input name="email" type="email" autoComplete="email" required /></label>
-            <label>
-              Password
-              <input name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} minLength={isRegister ? 10 : 1} maxLength={128} required />
-              {isRegister && <small>At least 10 characters, with uppercase, lowercase, and a number.</small>}
-            </label>
+            <div className="auth-password-field">
+              <label htmlFor={passwordId}>Password</label>
+              <div className="auth-password-input">
+                <input id={passwordId} name="password" type={passwordVisible ? "text" : "password"} autoComplete={isRegister ? "new-password" : "current-password"} minLength={isRegister ? 10 : 1} maxLength={128} aria-describedby={isRegister ? `${passwordId}-help` : undefined} required />
+                <button type="button" aria-label={passwordVisible ? "Hide password" : "Show password"} aria-controls={passwordId} onClick={() => setPasswordVisible((visible) => !visible)}>{passwordVisible ? "Hide" : "Show"}</button>
+              </div>
+              {isRegister && <small id={`${passwordId}-help`}>At least 10 characters, with uppercase, lowercase, and a number.</small>}
+            </div>
             <button className="button button-primary button-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? <><span className="button-spinner" />Please wait…</> : <>{isRegister ? "Create account" : "Log in"}<ArrowIcon /></>}
             </button>

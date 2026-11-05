@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 from typing import Literal
 from uuid import UUID
@@ -36,9 +35,9 @@ class ExplanationContent(BaseModel):
         ]
         for text in narratives:
             if text is not None and (
-                not text.strip() or len(text) > 1000 or re.search(r"\d", text)
+                not text.strip() or len(text) > 1000
             ):
-                raise ValueError("Explanations must be concise qualitative text without digits.")
+                raise ValueError("Explanations must be concise, non-empty text.")
         return self
 
 

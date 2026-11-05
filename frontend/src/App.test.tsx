@@ -22,6 +22,23 @@ describe("SolarPlan application routes", () => {
     expect(screen.getByRole("heading", { name: /understand what solar could mean for your roof/i })).toBeInTheDocument();
   });
 
+  test.each(["/login", "/register"])("toggles password visibility on %s without submitting", (route) => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    renderApp(route);
+    const password = screen.getByLabelText("Password", { exact: true });
+    fireEvent.change(password, { target: { value: "VisibilityTest123" } });
+    expect(password).toHaveAttribute("type", "password");
+    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(password).toHaveAttribute("type", "text");
+    expect(password).toHaveValue("VisibilityTest123");
+    expect(password).toHaveAttribute("autocomplete", route === "/login" ? "current-password" : "new-password");
+    fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(password).toHaveAttribute("type", "password");
+    expect(password).toHaveValue("VisibilityTest123");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test("redirects signed-out visitors", async () => {
     renderApp("/dashboard");
     expect(await screen.findByRole("heading", { name: /open your workspace/i })).toBeInTheDocument();

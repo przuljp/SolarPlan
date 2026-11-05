@@ -80,6 +80,8 @@ The authenticated endpoint is `GET /api/v1/projects/{project_id}/simulations/{si
 
 ## AI explanations
 
+After generation, **Hide explanation / Show explanation** collapses and reopens the existing answer without another API request. Login and registration also provide **Show / Hide** password controls; passwords start hidden and visibility changes do not submit the form.
+
 Production Analysis, saved Simulation Details and Compare Simulations include **Explain results**. It sends allowlisted saved energy/system data to OpenAI only after a user clicks. Names, addresses, coordinates and private resource IDs are excluded. Current household consumption is optional and defaults off; in a two-simulation comparison it is compared with the baseline. Historical production always comes from the selected immutable snapshot.
 
 Add your key to the root `.env` (never to frontend variables):
@@ -99,11 +101,11 @@ docker compose up -d --force-recreate backend
 
 Without a key the rest of SolarPlan works normally and the AI section reports that explanations are unavailable. **Check availability** refreshes this state after setup. The model setting targets a Responses API model supporting Structured Outputs and low reasoning effort; the default is `gpt-5-mini`.
 
-The backend uses the existing `httpx` dependency with the [Responses API and Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses). It sends `store: false`, validates structured output and renders it as plain text. Explanations are qualitative: digit-containing narratives are rejected, while exact values remain in the deterministic result UI. AI cannot modify calculations, layouts or simulations. Timeout, refusal, invalid output and provider failures return controlled errors without exposing credentials or provider error bodies. There are no automatic paid retries.
+The backend uses the existing `httpx` dependency with the [Responses API and Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses). It sends `store: false`, validates structured output and renders it as plain text. Explanations cite project-specific capacity, production, monthly results, optional consumption balances and simulation deltas. The model uses `{{path}}` references to an allowlisted `display_values` map; the backend replaces them with trusted values and units. Unknown references, raw digits and summaries missing capacity/production are rejected. This checks numerical provenance, not every possible qualitative claim. AI cannot modify calculations, layouts or simulations. Timeout, refusal, invalid output and provider failures return controlled errors without exposing credentials or provider error bodies. There are no automatic paid retries.
 
 An owner-scoped, process-local cache keeps up to 128 explanations for an hour; its key includes input data, consumption update time, model and prompt version. New generation requests have a ten-second per-user cooldown and cannot run concurrently for that user. This is development-scale protection, not a distributed rate limiter or persistent chat/history. Restarting the backend clears this cache. No new database migration or Python/Node dependency is required.
 
-Automated tests mock OpenAI. A live smoke test using synthetic energy data also passed: the configured `gpt-5-mini` returned HTTP 200 with a completed response accepted by application validation. Live consumption and two-simulation explanation flows still need end-to-end verification. AI summaries are not inserted into PDF/CSV exports in this increment.
+Automated tests mock OpenAI. Live synthetic-project tests also cover current consumption and two-simulation explanations. AI summaries are not inserted into PDF/CSV exports. The evidence prompt uses a new cache version so previous generic explanations are not reused.
 
 Next: final end-to-end verification, security hardening and deployment.
 
