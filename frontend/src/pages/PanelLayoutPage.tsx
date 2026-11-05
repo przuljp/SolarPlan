@@ -15,8 +15,17 @@ export function PanelLayoutPage() {
   const [searchParams] = useSearchParams();
   const panelId = searchParams.get("panel");
   const queryClient = useQueryClient();
-  const [orientation, setOrientation] = useState<PanelOrientation>("portrait");
-  const [panelCount, setPanelCount] = useState<number | null>(null);
+  const [chosenOrientation, setOrientation] = useState<PanelOrientation | null>(null);
+  const [panelCount, setPanelCount] = useState<number | null | undefined>(undefined);
+  const surface = useQuery({
+    queryKey: ["projects", projectId, "roof-surfaces", surfaceId],
+    queryFn: () => api.roofSurface(projectId!, surfaceId!),
+    enabled: Boolean(projectId && surfaceId && panelId),
+  });
+  const savedLayout = surface.data?.panel_layout?.solar_panel_id === panelId
+    ? surface.data.panel_layout : null;
+  const orientation = chosenOrientation ?? savedLayout?.orientation ?? "portrait";
+  const requestedCount = panelCount === undefined ? savedLayout?.panel_count : panelCount;
 
   const preview = useQuery({
     queryKey: ["layout-preview", projectId, surfaceId, panelId, orientation],
@@ -24,11 +33,11 @@ export function PanelLayoutPage() {
       solar_panel_id: panelId!,
       orientation,
     }),
-    enabled: Boolean(projectId && surfaceId && panelId),
+    enabled: Boolean(projectId && surfaceId && panelId && surface.isSuccess),
   });
 
   const effectiveCount = Math.max(0, Math.min(
-    Number.isFinite(panelCount) ? panelCount! : preview.data?.maximum_panel_count ?? 0,
+    Number.isFinite(requestedCount) ? requestedCount! : preview.data?.maximum_panel_count ?? 0,
     preview.data?.maximum_panel_count ?? 0,
   ));
   const save = useMutation({
@@ -46,7 +55,8 @@ export function PanelLayoutPage() {
   if (!panelId) {
     return <main className="workspace-page"><div className="query-error"><div><strong>No panel has been selected.</strong><p>Choose a module before calculating the layout.</p></div><Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces/${surfaceId}/panels`}>Choose panel</Link></div></main>;
   }
-  if (preview.isPending) return <main className="workspace-page"><div className="form-page-skeleton" /></main>;
+  if (surface.isError) return <main className="workspace-page"><div className="query-error" role="alert"><strong>The saved roof layout could not be loaded.</strong><button className="button button-secondary" onClick={() => surface.refetch()}>Try again</button></div></main>;
+  if (surface.isPending || preview.isPending) return <main className="workspace-page"><div className="form-page-skeleton" /></main>;
   if (preview.isError) return <main className="workspace-page"><div className="query-error"><strong>Layout could not be calculated.</strong><Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces/${surfaceId}/panels`}>Back to catalog</Link></div></main>;
 
   const layout = preview.data;

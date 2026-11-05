@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Docker bind mounts on Windows do not reliably emit file-change events.
+    watch: { usePolling: true, interval: 300 },
   },
   test: {
     environment: "jsdom",

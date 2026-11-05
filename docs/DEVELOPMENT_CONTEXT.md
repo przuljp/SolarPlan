@@ -2,7 +2,7 @@
 
 > Stanje dokumentovano: 5. novembar 2026.
 > Grana: `main` (`origin/main`)
-> Prethodni commit: `d4f29bc feat: export saved simulations as PDF and CSV reports`; OpenAI paket je opisan ispod (tačan novi hash i stanje push-a provjeriti kroz `git log` i `git status`).
+> Posljednji objavljeni commit: `4aa856f feat: explain saved energy results with OpenAI`. Naknadne QA ispravke opisane su u `docs/USER_FLOW_QA.md`; stanje commit-a provjeriti kroz `git status`.
 
 Ovaj dokument služi za nastavak razvoja u novom Codex razgovoru. Tvrdnje su označene kao **implementirano**, **planirano** ili **treba provjeriti** gdje stanje nije moguće pouzdano utvrditi iz koda i dosadašnjeg razgovora.
 
@@ -246,7 +246,7 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ### Potvrđeno u posljednjoj provjeri
 
-- Frontend: `npm test` — **23/23 testa prolaze**, uključujući AI unavailable/pending/error/success, eksplicitan klik i izbor potrošnje, poređenje i provjeru dostupnosti nakon konfiguracije.
+- Frontend: `npm test` — **27/27 testova prolazi**, uključujući AI stanja, sačuvani broj/orijentaciju rasporeda, grešku pri učitavanju i čišćenje privatnog cache-a između sesija.
 - Frontend: `npm run build` — produkcijski TypeScript/Vite build prolazi; postoji upozorenje da je glavni JS chunk veći od 500 kB.
 - Backend: kompletna pytest kolekcija — **164/164 testa prolaze**. Novi AI testovi pokrivaju Responses payload/schema, `store: false`, greške i odbijanja, timeout, izlaz bez cifara, vlasništvo, cache/cooldown, parcijalnu potrošnju i poređenje bez razlika po plohama. OpenAI je mockovan; nema troška ili zavisnosti testova od ključa.
 - Backend: Ruff provjera `backend/app` i `backend/tests` prolazi.
@@ -258,20 +258,21 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 ### Poznato
 
 - Legacy `RoofConfiguration` kod i tabela još postoje uz novi model `RoofSurface`.
-- Na mobilnom prikazu detalja simulacije uočeno je horizontalno prelivanje postojećeg grafikona/analysis grida. Novi PDF/CSV kontrolni red staje u širinu ekrana; postojeći grid treba zasebno doraditi.
+- Mobilno prelivanje analysis grida i tooltipa ispravljeno je; provjereno na 390px, 800px i desktopu. Grafikoni imaju lokalno horizontalno skrolovanje.
+- Stvarno AI poređenje jednom je vratilo 503, a ručni ponovni pokušaj je uspio. Uzrok prvog pokušaja nije potvrđen; adapter sada bilježi samo vrstu greške, bez osjetljivih podataka.
 
 ### Treba provjeriti
 
-- Stvarni end-to-end tok sa potrošnjom i poređenjem dvije simulacije. Osnovni stvarni OpenAI smoke test već je prošao sa sintetičkim energetskim podacima: backend je učitao ključ, `gpt-5-mini` je vratio HTTP 200 / `completed`, a odgovor je prošao aplikacijsku validaciju. Ključ i projektni podaci nisu ispisivani. Ponovljena ciljana provjera: 31/31 AI backend test prolazi.
+- Stvarni tok sa parcijalnom potrošnjom, optimizerom, poređenjem i OpenAI objašnjenjima sada je prošao na zasebnom QA nalogu. Obim i ograničenja zabilježeni su u `docs/USER_FLOW_QA.md`.
 - Provjeriti puni end-to-end tok nakon čistog `docker compose up --build`: registracija → projekat → lokacija → više ploha → layout → PVGIS → potrošnja.
 - Provjeriti da li u lokalnoj razvojnoj bazi još postoji privremena trapezna test-ploha; to je podatak iz razgovora, ne dio verzionisanog koda.
-- Potvrditi ponašanje svih dev okruženja kod Vite hot reload-a; ranije je povremeno bio potreban restart frontend kontejnera i hard refresh.
+- Vite sada koristi polling zbog Windows Docker bind mounta; izmjene su potvrđene bez ponavljanja restarta nakon konfiguracije.
 
 ## 8. Planirane funkcionalnosti
 
 ### Neposredni plan
 
-1. Završni end-to-end scenario, uključujući stvarna AI objašnjenja sa potrošnjom i poređenjem.
+1. Završni end-to-end scenario provjeren je u lokalnom okruženju; pregledati `docs/USER_FLOW_QA.md` za konkretne scenarije.
 2. Sigurnosno učvršćivanje i provjera rada pri deploymentu.
 3. Deployment i priprema demonstracije za diplomski rad.
 
@@ -287,7 +288,7 @@ U repozitoriju još postoje model, migracija i izvorni router za staru jednu `Ro
 
 ## 9. Posljednji zadatak i odluka
 
-Posljednji implementirani paket su **OpenAI objašnjenja sačuvane simulacije i poređenja**: backend adapter/servis/tanke rute, frontend panel i testovi. Koristi postojeći `httpx`, Responses API, JSON Schema i `store: false`. Osnovni model je `gpt-5-mini`, promjenjiv kroz backend konfiguraciju. Nema nove biblioteke ili migracije.
+Posljednji zadatak je **završna provjera korisničkog toka i ciljane ispravke**: učitavanje sačuvanog rasporeda, izolacija cache-a između sesija, mobilni grid/tooltip, jasna poruka o snapshot-u i Vite polling. Detalji su u `docs/USER_FLOW_QA.md`. Prethodni paket su OpenAI objašnjenja preko Responses API-ja, postojećeg `httpx` klijenta i `store: false`; model je `gpt-5-mini`. Nema nove biblioteke ili migracije.
 
 Prazno `SOLARPLAN_OPENAI_API_KEY=` je dodato u root `.env` i `.env.example`; ključ se Docker-om prosljeđuje samo backendu. Potrošnja je opcioni trenutni kontekst, nije istorijski snapshot. Objašnjenja se ne čuvaju u bazi niti ubacuju u PDF/CSV. Cache je vlasnički, do 128 stavki / sat, uz cooldown od deset sekundi i jedan aktivan zahtjev po korisniku; sve je lokalno procesu i resetuje se restartom. Distribuirano ograničavanje zahtjeva ostaje završni deployment zadatak.
 
@@ -297,7 +298,7 @@ Ranije je dogovoreno da se Open-Meteo ne implementira: kratkoročna prognoza ne 
 
 ## 10. Sljedeća tri konkretna koraka
 
-1. **Završna funkcionalna provjera** — end-to-end scenario od registracije do izvještaja, uključujući AI objašnjenja sa potrošnjom i poređenjem uz stvarni model.
+1. **Pregled i verzionisanje QA ispravki** — provjera diff-a, pa commit/push na zahtjev korisnika; lokalni tok je provjeren i dokumentovan.
 2. **Sigurnosno učvršćivanje** — provjera vlasništva i grešaka, produkcijske konfiguracije i distribuiranog ograničavanja AI zahtjeva.
 3. **Deployment i demonstracija** — reproducibilno pokretanje i priprema scenarija za odbranu diplomskog rada.
 

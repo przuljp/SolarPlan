@@ -151,6 +151,7 @@ export function ProductionAnalysisPage() {
       </form>
     </header>
 
+    {simulation && !run.isPending && <p className="analysis-saved-note">Showing the latest saved calculation. Changes to the location, roof surfaces or panel layouts are included only after you choose Recalculate.</p>}
     {run.isError && <div className="form-error analysis-error" role="alert"><strong>Analysis could not be completed.</strong><span>{run.error instanceof ApiError ? run.error.message : "Please try again shortly."}</span></div>}
     {run.isPending && <section className="analysis-loading" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Calculating every roof surface…</strong><p>SolarPlan is requesting PVGIS estimates and combining them into one project result.</p></div></section>}
     {!run.isPending && simulation && <AnalysisResult simulation={simulation} comparisonContent={<>

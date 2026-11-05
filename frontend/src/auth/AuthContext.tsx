@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../lib/api";
 import { clearAccessToken, getAccessToken, setAccessToken } from "../lib/token-storage";
@@ -15,6 +16,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(() => Boolean(getAccessToken()));
 
@@ -39,7 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = await api.login(input);
         setAccessToken(token.access_token);
         try {
-          setUser(await api.currentUser());
+          const signedInUser = await api.currentUser();
+          queryClient.clear();
+          setUser(signedInUser);
         } catch (error) {
           clearAccessToken();
           throw error;
@@ -50,7 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = await api.login({ email: input.email, password: input.password });
         setAccessToken(token.access_token);
         try {
-          setUser(await api.currentUser());
+          const signedInUser = await api.currentUser();
+          queryClient.clear();
+          setUser(signedInUser);
         } catch (error) {
           clearAccessToken();
           throw error;
@@ -61,11 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await api.logout();
         } finally {
           clearAccessToken();
+          queryClient.clear();
           setUser(null);
         }
       },
     }),
-    [isLoading, user],
+    [isLoading, user, queryClient],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

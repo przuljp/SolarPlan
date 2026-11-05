@@ -50,7 +50,7 @@ export function SystemLossControl({
         </span>
       </div>
       <strong>{Number.isFinite(value) ? value : "—"}<small>%</small></strong>
-      <span className="system-loss-default">Recommended default</span>
+      <span className="system-loss-default">{value === DEFAULT_SYSTEM_LOSS_PERCENT ? "Recommended default" : "Manual estimate"}</span>
     </div>
 
     <label className="system-loss-manual-toggle">
