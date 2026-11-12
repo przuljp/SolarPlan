@@ -90,7 +90,9 @@ describe("SolarPlan application routes", () => {
     expect(await screen.findByRole("heading", { name: "Roof surfaces" })).toBeInTheDocument();
     expect(screen.getByText("South roof")).toBeInTheDocument();
     expect(screen.getByText("West roof")).toBeInTheDocument();
-    expect(screen.getByText(/12 panels · 5.22 kWp total/i)).toBeInTheDocument();
+    expect(screen.getByText("Total capacity")).toBeInTheDocument();
+    expect(screen.getByText("South (S)")).toBeInTheDocument();
+    expect(screen.getByText("West (W)")).toBeInTheDocument();
   });
 
   test("keeps roof management available when a project is ready for analysis", async () => {
@@ -198,11 +200,11 @@ describe("SolarPlan application routes", () => {
       .mockResolvedValueOnce(json(profile)));
     sessionStorage.setItem("solarplan.access_token", "test-token");
     renderApp("/projects/p1/consumption");
-    expect(await screen.findByRole("heading", { name: /household energy consumption/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /household consumption/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: /annual total/i }));
-    fireEvent.change(screen.getByRole("spinbutton", { name: /annual consumption/i }), { target: { value: "4800" } });
+    fireEvent.change(screen.getByRole("spinbutton", { name: /annual electricity consumption/i }), { target: { value: "4800" } });
     fireEvent.click(screen.getByRole("button", { name: /save consumption/i }));
-    expect(await screen.findByRole("heading", { name: /saved profile/i })).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("Consumption profile saved.");
     expect(screen.getByText("4,800 kWh")).toBeInTheDocument();
   });
 

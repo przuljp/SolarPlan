@@ -10,6 +10,7 @@ import type { EnergyComparison, EnergySimulation } from "../types/api";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const number = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+const directions: Record<number, string> = { 0: "North (N)", 45: "Northeast (NE)", 90: "East (E)", 135: "Southeast (SE)", 180: "South (S)", 225: "Southwest (SW)", 270: "West (W)", 315: "Northwest (NW)" };
 const decimal = new Intl.NumberFormat("en-GB", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function EnergyComparisonPanel({ comparison, projectId }: { comparison: EnergyComparison; projectId: string }) {
@@ -49,22 +50,22 @@ function EnergyComparisonPanel({ comparison, projectId }: { comparison: EnergyCo
   </section>;
 }
 
-export function AnalysisResult({ simulation, comparisonContent }: { simulation: EnergySimulation; comparisonContent?: ReactNode }) {
+export function AnalysisResult({ simulation, comparisonContent, settingsContent }: { simulation: EnergySimulation; comparisonContent?: ReactNode; settingsContent?: ReactNode }) {
   const maximumMonth = Math.max(...simulation.monthly_results.map((item) => item.energy_kwh), 1);
   const maximumSurface = Math.max(...simulation.surface_results.map((item) => item.annual_kwh), 1);
 
   return <>
-    <SimulationReportActions key={simulation.id} projectId={simulation.project_id} simulationId={simulation.id} />
+    {!settingsContent && <SimulationReportActions key={simulation.id} projectId={simulation.project_id} simulationId={simulation.id} />}
     <section className="analysis-metrics" aria-label="Production summary">
       <div><span>Estimated annual production</span><strong>{number.format(simulation.annual_kwh)} <small>kWh/year</small></strong></div>
       <div><span>Installed system size</span><strong>{decimal.format(simulation.installed_kwp)} <small>kWp</small></strong></div>
       <div><span>Specific yield</span><strong>{number.format(simulation.specific_yield_kwh_per_kwp)} <small>kWh/kWp</small></strong></div>
     </section>
 
-    <AiExplanationPanel key={`explanation-${simulation.id}`} projectId={simulation.project_id} simulationId={simulation.id} />
-    {comparisonContent}
+    {!settingsContent && <AiExplanationPanel key={`explanation-${simulation.id}`} projectId={simulation.project_id} simulationId={simulation.id} />}
+    {!settingsContent && comparisonContent}
 
-    <div className="analysis-grid">
+    <div className={settingsContent ? "analysis-chart-area" : "analysis-grid"}>
       <section className="content-panel production-chart-panel">
         <div className="analysis-panel-heading"><div><h2>Production through the year</h2><p>Combined estimate for every saved roof surface.</p></div><span>PVGIS {simulation.provider_version}</span></div>
         <figure className="production-chart">
@@ -82,23 +83,28 @@ export function AnalysisResult({ simulation, comparisonContent }: { simulation: 
         </details>
       </section>
 
-      <aside className="content-panel analysis-assumptions">
+      {!settingsContent && <aside className="content-panel analysis-assumptions">
         <h2>Analysis assumptions</h2>
         <dl><div><dt>System loss</dt><dd>{simulation.system_loss_percent}%</dd></div><div><dt>Roof surfaces</dt><dd>{simulation.surface_results.length}</dd></div><div><dt>Calculated</dt><dd>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(simulation.created_at))}</dd></div></dl>
         <p>This is a preliminary PVGIS estimate based on location, roof direction, tilt and installed power. It does not model nearby shading, structural limits or inverter selection.</p>
-      </aside>
+      </aside>}
     </div>
 
+    {settingsContent && <>
+      <div className="analysis-tools-grid">{settingsContent}<section className="content-panel analysis-export"><h2>Export results</h2><p>Download the selected saved simulation.</p><SimulationReportActions key={simulation.id} projectId={simulation.project_id} simulationId={simulation.id} /></section></div>
+      <section className="analysis-compact-assumptions" aria-label="Analysis assumptions"><h2>Analysis assumptions</h2><dl><div><dt>Saved system losses</dt><dd>{simulation.system_loss_percent}%</dd></div><div><dt>Roof surfaces</dt><dd>{simulation.surface_results.length}</dd></div><div><dt>Calculated</dt><dd>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(simulation.created_at))}</dd></div><div><dt>Source</dt><dd>PVGIS {simulation.provider_version}</dd></div></dl><p>This is a preliminary PVGIS estimate based on location, roof direction, tilt and installed power. It does not model nearby shading, structural limits or inverter selection.</p></section>
+    </>}
     <section className="content-panel surface-production-panel">
       <div className="analysis-panel-heading"><div><h2>Contribution by roof surface</h2><p>Different directions and tilts produce different amounts from the same installed power.</p></div></div>
       <div className="surface-production-list">
         {simulation.surface_results.map((surface) => <article key={surface.roof_surface_id}>
-          <div className="surface-production-heading"><div><h3>{surface.name}</h3><span>{surface.installed_kwp.toFixed(2)} kWp · {surface.tilt_deg}° tilt · {surface.azimuth_deg}° azimuth</span></div><strong>{number.format(surface.annual_kwh)} <small>kWh/year</small></strong></div>
-          <div className="surface-production-track" aria-hidden="true"><i style={{ width: `${surface.annual_kwh / maximumSurface * 100}%` }} /></div>
-          <span className="surface-yield">Specific yield: {number.format(surface.specific_yield_kwh_per_kwp)} kWh/kWp</span>
+          <div className="surface-production-heading"><div><h3>{surface.name}</h3><span>{surface.installed_kwp.toFixed(2)} kWp · {surface.tilt_deg}° tilt · {settingsContent ? directions[surface.azimuth_deg] ?? `Saved direction ${surface.azimuth_deg}°` : `${surface.azimuth_deg}° azimuth`}</span></div><strong>{number.format(surface.annual_kwh)} <small>kWh/year</small></strong></div>
+          <div className="surface-production-track" aria-hidden="true"><i style={{ width: `${surface.annual_kwh / (settingsContent ? Math.max(simulation.annual_kwh, 1) : maximumSurface) * 100}%` }} /></div>
+          <span className="surface-yield">{settingsContent && <>{decimal.format(simulation.annual_kwh > 0 ? surface.annual_kwh / simulation.annual_kwh * 100 : 0)}% of total production · </>}Specific yield: {number.format(surface.specific_yield_kwh_per_kwp)} kWh/kWp</span>
         </article>)}
       </div>
     </section>
+    {settingsContent && <><AiExplanationPanel key={`explanation-${simulation.id}`} projectId={simulation.project_id} simulationId={simulation.id} title="AI explanation" />{comparisonContent}</>}
   </>;
 }
 
@@ -139,22 +145,27 @@ export function ProductionAnalysisPage() {
     enabled: Boolean(simulation),
   });
 
+  const settingsContent = <section className="content-panel analysis-settings"><h2>Analysis settings</h2>
+    <div className="analysis-loss-register"><p>Saved simulation: <strong>{simulation ? `${simulation.system_loss_percent}%` : "Not calculated"}</strong></p><p>Next calculation: <strong>{Number.isFinite(systemLoss) ? `${systemLoss}%` : "—"}</strong> <small>{systemLoss === DEFAULT_SYSTEM_LOSS_PERCENT ? "Recommended default" : "Manual estimate"}</small></p></div>
+    {simulation && systemLoss !== simulation.system_loss_percent && <p className="analysis-pending-loss" role="status">New losses are not applied to saved results. Choose Recalculate to use them.</p>}
+<form id="analysis-run-form" className="analysis-run-form" onSubmit={(event) => { event.preventDefault(); if (systemLossValid) run.mutate(); }}>
+        <details className="analysis-loss-details"><summary>Adjust system losses</summary><SystemLossControl id="analysis-system-loss" value={systemLoss} disabled={run.isPending} onChange={(value) => { setHasEditedSystemLoss(true); setSystemLoss(value); }} /></details>
+      </form></section>;
+
   if (latest.isPending) return <main className="workspace-page"><div className="form-page-skeleton" role="status"><span className="sr-only">Loading production analysis…</span></div></main>;
   if (latest.isError) return <main className="workspace-page"><div className="query-error"><div><strong>Production analysis could not be loaded.</strong><p>Check the connection and try again.</p></div><button className="button button-secondary" onClick={() => latest.refetch()}>Try again</button></div></main>;
 
-  return <main className="workspace-page production-analysis-page">
+  return <main className="workspace-page production-analysis-page analysis-dashboard">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
     <header className="analysis-heading"><div><h1>Production analysis</h1><p>Estimate how much electricity the complete roof model could produce during a typical year.</p><Link className="analysis-history-link" to={`/projects/${projectId}/simulations`}>View simulation history</Link></div>
-      <form id="analysis-run-form" className="analysis-run-form" onSubmit={(event) => { event.preventDefault(); if (systemLossValid) run.mutate(); }}>
-        <SystemLossControl id="analysis-system-loss" value={systemLoss} disabled={run.isPending} onChange={(value) => { setHasEditedSystemLoss(true); setSystemLoss(value); }} />
-        <button className="button button-primary" type="submit" disabled={run.isPending || !systemLossValid}>{run.isPending ? "Calculating…" : simulation ? "Recalculate" : "Run analysis"}</button>
-      </form>
+        <button className="button button-primary" type="submit" form="analysis-run-form" disabled={run.isPending || !systemLossValid}>{run.isPending ? "Calculating…" : simulation ? "Recalculate" : "Run analysis"}</button>
     </header>
 
     {simulation && !run.isPending && <p className="analysis-saved-note">Showing the latest saved calculation. Changes to the location, roof surfaces or panel layouts are included only after you choose Recalculate.</p>}
+    {(!simulation || run.isPending) && settingsContent}
     {run.isError && <div className="form-error analysis-error" role="alert"><strong>Analysis could not be completed.</strong><span>{run.error instanceof ApiError ? run.error.message : "Please try again shortly."}</span></div>}
     {run.isPending && <section className="analysis-loading" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Calculating every roof surface…</strong><p>SolarPlan is requesting PVGIS estimates and combining them into one project result.</p></div></section>}
-    {!run.isPending && simulation && <AnalysisResult simulation={simulation} comparisonContent={<>
+    {!run.isPending && simulation && <AnalysisResult simulation={simulation} settingsContent={settingsContent} comparisonContent={<>
       {comparison.isPending && <section className="comparison-loading" role="status"><span className="spinner" aria-hidden="true" /><span>Loading the production and consumption comparison…</span></section>}
       {comparison.isError && <div className="query-error comparison-query-error"><div><strong>Energy comparison could not be loaded.</strong><p>The production result is still available. Try loading the comparison again.</p></div><button className="button button-secondary" onClick={() => comparison.refetch()}>Try again</button></div>}
       {!comparison.isPending && !comparison.isError && comparison.data && comparison.data.simulation_id === simulation.id && <EnergyComparisonPanel comparison={comparison.data} projectId={projectId!} />}

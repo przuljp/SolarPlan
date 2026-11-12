@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ArrowIcon } from "../components/Icons";
@@ -23,22 +23,39 @@ export function ConsumptionPage() {
       catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error; }
     },
   });
+  const initialized = useRef<string | undefined>(undefined);
+  const baseline = useRef("");
+  const snapshot = JSON.stringify({ mode, monthlyValues, annualValue });
+  const dirty = baseline.current !== "" && baseline.current !== snapshot;
   useEffect(() => {
-    if (!consumption.data) return;
-    if (consumption.data.profile_kind === "annual_only") {
-      setMode("annual");
-      setAnnualValue(String(consumption.data.annual_consumption_kwh ?? ""));
-      return;
-    }
-    setMode("monthly");
-    const values = Array(12).fill("") as string[];
-    consumption.data.monthly_values.forEach((item) => { values[item.month - 1] = String(item.consumption_kwh); });
-    setMonthlyValues(values);
-  }, [consumption.data]);
+    if (consumption.isPending || consumption.isError || initialized.current === projectId) return;
+    initialized.current = projectId;
+    const profile = consumption.data;
+    const nextMode = profile?.profile_kind === "annual_only" ? "annual" : "monthly";
+    const nextMonthly = Array(12).fill("") as string[];
+    profile?.monthly_values.forEach((item) => { nextMonthly[item.month - 1] = String(item.consumption_kwh); });
+    const nextAnnual = nextMode === "annual" ? String(profile?.annual_consumption_kwh ?? "") : "";
+    setMode(nextMode); setMonthlyValues(nextMonthly); setAnnualValue(nextAnnual);
+    baseline.current = JSON.stringify({ mode: nextMode, monthlyValues: nextMonthly, annualValue: nextAnnual });
+  }, [consumption.data, consumption.isPending, consumption.isError, projectId]);
+  useEffect(() => {
+    if (!dirty) return;
+    const unload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const leave = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as Element).closest?.("a[href]");
+      if (!link || link.getAttribute("href") === location.pathname + location.search) return;
+      if (!window.confirm("Leave without saving your consumption changes?")) { event.preventDefault(); event.stopPropagation(); }
+    };
+    window.addEventListener("beforeunload", unload);
+    document.addEventListener("click", leave, true);
+    return () => { window.removeEventListener("beforeunload", unload); document.removeEventListener("click", leave, true); };
+  }, [dirty]);
   const save = useMutation({
     mutationFn: (input: ConsumptionProfileInput) => api.saveConsumptionProfile(projectId!, input),
     onSuccess: (saved) => {
       queryClient.setQueryData(["projects", projectId, "consumption"], saved);
+      baseline.current = snapshot;
       setFormError(null);
     },
   });
@@ -67,32 +84,38 @@ export function ConsumptionPage() {
     }
     save.mutate({ annual_consumption_kwh: null, monthly_values: monthly });
   }
-  const profile = save.data ?? consumption.data;
+  const knownValues = monthlyValues.filter((value) => value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0).map(Number);
+  const knownMonths = knownValues.length;
+  const knownTotal = knownValues.reduce((total, value) => total + value, 0);
+  const annualKnown = annualValue !== "" && Number.isFinite(Number(annualValue)) && Number(annualValue) >= 0;
+  const quality = mode === "annual" ? annualKnown ? "Annual total known" : "No data" : knownMonths === 12 ? "Complete profile" : knownMonths ? "Partial profile" : "No data";
 
   if (consumption.isPending) return <main className="workspace-page narrow-page"><div className="form-page-skeleton" role="status"><span className="sr-only">Loading consumption profile…</span></div></main>;
   if (consumption.isError) return <main className="workspace-page narrow-page"><div className="query-error"><div><strong>Consumption profile could not be loaded.</strong><p>Check the connection and try again.</p></div><button className="button button-secondary" onClick={() => consumption.refetch()}>Try again</button></div></main>;
 
-  return <main className="workspace-page consumption-page">
+  return <main className="workspace-page consumption-page consumption-redesign">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
-    <header className="form-page-heading"><h1>Household energy consumption</h1><p>Add the values you know. Partial monthly data remains clearly marked and is never multiplied into an invented annual estimate.</p></header>
+    <header className="form-page-heading"><h1>Household consumption</h1><p>Enter your electricity usage to compare it with estimated solar production.</p><Link className="consumption-analysis-link" to={`/projects/${projectId}/analysis`}>Continue to production analysis <ArrowIcon /></Link></header>
     <div className="consumption-layout">
       <form className="consumption-form" onSubmit={submit}>
         {(formError || save.isError) && <div className="form-error" role="alert">{formError ?? (save.error instanceof Error ? save.error.message : "Consumption could not be saved.")}</div>}
-        {save.isSuccess && <div className="form-success" role="status">Consumption profile saved.</div>}
-        <fieldset className="form-section consumption-mode"><legend>How do you want to enter consumption?</legend>
-          <label><input type="radio" name="consumption-mode" checked={mode === "monthly"} onChange={() => setMode("monthly")} /><span><strong>Monthly values</strong><small>Enter any known calendar months.</small></span></label>
-          <label><input type="radio" name="consumption-mode" checked={mode === "annual"} onChange={() => setMode("annual")} /><span><strong>Annual total</strong><small>Use this only when the monthly distribution is unknown.</small></span></label>
+        {save.isSuccess && !dirty && <div className="form-success" role="status">Consumption profile saved.</div>}
+        <fieldset className="consumption-segmented"><legend className="sr-only">Consumption input method</legend>
+          <label className={mode === "monthly" ? "is-selected" : ""}><input type="radio" name="consumption-mode" aria-label="Monthly values" disabled={save.isPending} checked={mode === "monthly"} onChange={() => setMode("monthly")} /><span>Monthly values</span></label>
+          <label className={mode === "annual" ? "is-selected" : ""}><input type="radio" name="consumption-mode" aria-label="Annual total" disabled={save.isPending} checked={mode === "annual"} onChange={() => setMode("annual")} /><span>Annual total</span></label>
         </fieldset>
         {mode === "monthly" ? <fieldset className="form-section"><legend>Monthly consumption</legend><p className="section-copy">Values are in kWh. Leave unknown months empty; clear a saved value to remove that month.</p>
-          <div className="consumption-month-grid">{months.map((month, index) => <label key={month}>{month}<span className="field-unit">kWh</span><input aria-label={`${month} consumption`} type="number" min="0" step="0.1" value={monthlyValues[index]} onChange={(event) => setMonthlyValues(monthlyValues.map((value, itemIndex) => itemIndex === index ? event.target.value : value))} /></label>)}</div>
-        </fieldset> : <fieldset className="form-section"><legend>Annual consumption</legend><p className="section-copy">This records the known annual total without inventing monthly values.</p><label>Annual consumption <span className="field-unit">kWh/year</span><input type="number" min="0" step="0.1" value={annualValue} onChange={(event) => setAnnualValue(event.target.value)} required /></label></fieldset>}
+          <div className="consumption-month-grid">{months.map((month, index) => <label key={month}>{month}<span className="field-unit">kWh</span><input aria-label={`${month} consumption`} type="number" disabled={save.isPending} min="0" step="0.1" value={monthlyValues[index]} onChange={(event) => setMonthlyValues(monthlyValues.map((value, itemIndex) => itemIndex === index ? event.target.value : value))} /></label>)}</div>
+        </fieldset> : <fieldset className="form-section"><legend>Annual consumption</legend><p className="section-copy">Enter your known annual electricity consumption if monthly data is unavailable. No monthly values will be estimated.</p><label>Annual electricity consumption (kWh)<input type="number" disabled={save.isPending} min="0" step="0.1" value={annualValue} onChange={(event) => setAnnualValue(event.target.value)} required /></label></fieldset>}
+        <section className="consumption-input-summary" aria-label="Input summary"><div className="consumption-summary-heading"><h2>Input summary</h2><span>{dirty ? "Unsaved changes" : ""}</span></div>
+          <dl><div><dt>Status</dt><dd>{quality}</dd></div><div><dt>Months entered</dt><dd>{mode === "monthly" ? `${knownMonths}/12` : "Not provided"}</dd></div><div><dt>{mode === "annual" || knownMonths === 12 ? "Annual consumption" : "Sum of known months"}</dt><dd>{mode === "annual" ? annualKnown ? `${number.format(Number(annualValue))} kWh` : "Not known" : `${number.format(knownTotal)} kWh`}</dd></div>
+          {mode === "monthly" && <div><dt>Monthly coverage</dt><dd>{number.format(knownMonths / 12 * 100)}%</dd></div>}
+          {mode === "monthly" && knownMonths > 0 && <div><dt>Average known month</dt><dd>{number.format(knownTotal / knownMonths)} kWh</dd></div>}</dl>
+          <p>{mode === "annual" ? "Annual total only. Monthly seasonality is not available." : knownMonths === 12 ? "Complete monthly profile. Annual consumption is the sum of all 12 months." : "Unknown months remain blank. This is the sum of known months, not an annual estimate."}</p>
+        </section>
         <div className="form-actions"><Link className="button button-secondary" to={`/projects/${projectId}`}>Cancel</Link><button className="button button-primary" disabled={save.isPending}>{save.isPending ? "Saving…" : "Save consumption"}</button></div>
       </form>
-      <aside className="content-panel consumption-summary">
-        <h2>{profile ? "Saved profile" : "Data quality"}</h2>
-        {profile ? <><dl><div><dt>Known consumption</dt><dd>{number.format(profile.total_known_consumption_kwh)} kWh</dd></div><div><dt>Known months</dt><dd>{profile.known_months} of 12</dd></div><div><dt>Monthly coverage</dt><dd>{profile.coverage_percent}%</dd></div><div><dt>Average known month</dt><dd>{profile.average_known_monthly_kwh === null ? "N/A" : `${number.format(profile.average_known_monthly_kwh)} kWh`}</dd></div></dl><p>{profile.profile_kind === "complete_monthly" ? "Complete monthly profile. Annual consumption is the sum of all 12 months." : profile.profile_kind === "annual_only" ? "Annual total is known, but monthly seasonality is not available." : "Partial monthly profile. No annual total is inferred from missing months."}</p></> : <p>Save one or more months for a partial profile, all 12 months for a complete profile, or a known annual total.</p>}
-        <Link className="button button-secondary button-full" to={`/projects/${projectId}/analysis`}>Continue to production analysis <ArrowIcon /></Link>
-      </aside>
+
     </div>
   </main>;
 }

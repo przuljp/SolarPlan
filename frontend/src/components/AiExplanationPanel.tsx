@@ -3,10 +3,11 @@ import { useId, useState } from "react";
 
 import { api } from "../lib/api";
 
-export function AiExplanationPanel({ projectId, simulationId, comparisonSimulationId }: {
+export function AiExplanationPanel({ projectId, simulationId, comparisonSimulationId, title = "Understand these results" }: {
   projectId: string;
   simulationId: string;
   comparisonSimulationId?: string;
+  title?: string;
 }) {
   const titleId = useId();
   const contentId = useId();
@@ -26,7 +27,7 @@ export function AiExplanationPanel({ projectId, simulationId, comparisonSimulati
 
   return <section className="content-panel ai-explanation-panel" aria-labelledby={titleId}>
     <div className="ai-explanation-heading">
-      <div><h2 id={titleId}>Understand these results</h2><p>Get a plain-language explanation of {comparisonSimulationId ? "the differences between these saved simulations" : "this saved simulation"}.</p></div>
+      <div><h2 id={titleId}>{title}</h2><p>Get a plain-language explanation of {comparisonSimulationId ? "the differences between these saved simulations" : "this saved simulation"}.</p></div>
       <button className="button button-secondary" type="button"
         disabled={explanation.isPending || (!result && !status.data?.available)}
         aria-expanded={result ? !collapsed : undefined} aria-controls={result ? contentId : undefined}
