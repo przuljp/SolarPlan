@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import { NavigationEffects } from "./components/NavigationEffects";
 import { AppShell } from "./components/AppShell";
 import { AdminRoute } from "./components/AdminRoute";
 import { AdminDashboardPage, AdminPanelsPage, AdminUsersPage } from "./pages/AdminPages";
@@ -24,7 +25,7 @@ import { SimulationComparisonPage } from "./pages/SimulationComparisonPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 export default function App() {
-  return <Routes>
+  return <><NavigationEffects /><Routes>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/register" element={<AuthPage mode="register" />} />
@@ -55,5 +56,5 @@ export default function App() {
     </Route></Route>
     <Route path="/404" element={<NotFoundPage />} />
     <Route path="*" element={<Navigate to="/404" replace />} />
-  </Routes>;
+  </Routes></>;
 }

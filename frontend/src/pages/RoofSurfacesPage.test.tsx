@@ -14,13 +14,16 @@ function open(data: unknown[] | Error, saved = false) {
 }
 afterEach(() => { cleanup(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 test("empty state has zero summary and no analysis action", async () => {
-  open([]); await screen.findByText("No roof surfaces yet");
+  open([]); await screen.findByText("Start with your first roof surface");
+  expect(screen.getAllByRole("link", { name: /^Add roof surface/ })).toHaveLength(1);
   expect(screen.queryByRole("link", { name: /Open production analysis/ })).not.toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Add first surface/ })).toHaveAttribute("href", "/projects/p1/roof-surfaces/new");
+  expect(screen.getByRole("link", { name: /^Add roof surface/ })).toHaveAttribute("href", "/projects/p1/roof-surfaces/new");
 });
 test("one complete surface shows real totals, exact categories and preserved routes", async () => {
   open([{ ...roof, panel_layout: layout }]);
   await screen.findByText("South roof");
+  expect(screen.getByRole("link", { name: /^Add roof surface/ })).toHaveAttribute("href", "/projects/p1/roof-surfaces/new");
+  expect(screen.queryByText("Start with your first roof surface")).not.toBeInTheDocument();
   expect(within(screen.getByLabelText("Project summary")).getByText("12")).toBeInTheDocument();
   expect(screen.getByText("South (S)")).toBeInTheDocument();
   expect(screen.getByText("Gentle slope · 20°")).toBeInTheDocument();
@@ -46,15 +49,15 @@ test("saved notification can be dismissed", async () => {
 test("failure state offers retry without showing an empty project", async () => {
   open(new Error("offline"));
   expect(await screen.findByRole("alert")).toHaveTextContent("could not be loaded");
-  expect(screen.queryByText("No roof surfaces yet")).not.toBeInTheDocument();
+  expect(screen.queryByText("Start with your first roof surface")).not.toBeInTheDocument();
   vi.mocked(api.roofSurfaces).mockResolvedValue([]);
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-  expect(await screen.findByText("No roof surfaces yet")).toBeInTheDocument();
+  expect(await screen.findByText("Start with your first roof surface")).toBeInTheDocument();
 });
 test("shows an accessible loading state before data arrives", async () => {
   open([]);
   expect(screen.getByRole("status")).toHaveTextContent("Loading roof surfaces");
-  await screen.findByText("No roof surfaces yet");
+  await screen.findByText("Start with your first roof surface");
 });
 test("keeps deletion confirmation and reports a failed deletion", async () => {
   open([roof]); await screen.findByText("South roof");

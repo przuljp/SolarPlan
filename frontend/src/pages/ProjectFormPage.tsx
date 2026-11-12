@@ -51,7 +51,7 @@ export function ProjectFormPage({ mode }: { mode: "create" | "edit" }) {
   if (project.isError && isEdit) return <main className="workspace-page"><div className="query-error"><strong>Project not found.</strong><Link to="/projects">Return to projects</Link></div></main>;
 
   return (
-    <main className="workspace-page narrow-page">
+    <main className="workspace-page project-form-page">
       <Link className="back-link" to={isEdit && projectId ? `/projects/${projectId}` : "/projects"}>← Back to {isEdit ? "project" : "projects"}</Link>
       <header className="form-page-heading">
         <h1>{isEdit ? "Edit the project basics." : "Start with the property you want to assess."}</h1>
@@ -66,7 +66,7 @@ export function ProjectFormPage({ mode }: { mode: "create" | "edit" }) {
         </label>
         <label>
           Description <span className="optional">Optional</span>
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={5} placeholder="Add a short note about the property or your assessment goal." />
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={4} placeholder="Add a short note about the property or your assessment goal." />
         </label>
         <div className="form-actions">
           <Link className="button button-secondary" to={isEdit && projectId ? `/projects/${projectId}` : "/projects"}>Cancel</Link>

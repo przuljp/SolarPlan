@@ -7,7 +7,7 @@ import { ProjectDetailPage } from "./ProjectDetailPage";
 vi.mock("../lib/api",async(original)=>({...await original<typeof import("../lib/api")>(),api:{project:vi.fn(),projectLocation:vi.fn(),roofSurfaces:vi.fn(),deleteProject:vi.fn()}}));
 const roof={id:"s1",panel_layout:{panel_count:12,installed_kwp:5.22,solar_panel:{manufacturer:"LONGi",model_sku:"435M"}}};
 function open(surfaces:unknown[]=[],location:unknown={location_label:"Dobro Polje, Kalinovik, Bosnia and Herzegovina"},status="draft",error=false){
- vi.mocked(api.project).mockResolvedValue({name:"Family house",description:"Home",status} as never);
+ vi.mocked(api.project).mockResolvedValue({name:"Family house",description:"Home",status,analysis_status:status==="analyzed"?"analyzed":"in_progress"} as never);
  vi.mocked(api.projectLocation).mockResolvedValue(location as never);
  if(error)vi.mocked(api.roofSurfaces).mockRejectedValue(new Error("offline"));else vi.mocked(api.roofSurfaces).mockResolvedValue(surfaces as never);
  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter initialEntries={["/projects/p1"]}><Routes><Route path="/projects/:projectId" element={<ProjectDetailPage/>}/><Route path="/projects" element={<p>Projects destination</p>}/></Routes></MemoryRouter></QueryClientProvider>);

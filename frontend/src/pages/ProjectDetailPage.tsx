@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { projectStatus, statusLabels } from "../lib/project-status";
 import { ArrowIcon } from "../components/Icons";
 import { api, ApiError } from "../lib/api";
 
@@ -22,7 +23,7 @@ export function ProjectDetailPage() {
   const shortLocation = locationParts.length > 4 ? [...locationParts.slice(0, 2), ...locationParts.slice(-2)].join(", ") : label;
   return <main className="workspace-page project-overview-page">
     <Link className="back-link" to="/projects">← All projects</Link>
-    <header className="project-detail-heading overview-heading"><div><div className="overview-title"><h1>{project.data.name}</h1><span className={`status-badge ${project.data.status === "analyzed" ? "status-complete" : ""}`}>{project.data.status === "analyzed" ? "Analyzed" : "Draft"}</span></div><p>{project.data.description || "No description has been added yet."}</p></div><div className="detail-actions"><Link className="button button-secondary" to={`/projects/${projectId}/edit`}>Edit details</Link><button type="button" className="button button-danger" disabled={deletion.isPending} onClick={() => window.confirm(`Delete ${project.data.name}?`) && deletion.mutate()}>{deletion.isPending ? "Deleting…" : "Delete project"}</button></div></header>
+    <header className="project-detail-heading overview-heading"><div><div className="overview-title"><h1>{project.data.name}</h1><span className={`status-badge ${projectStatus(project.data) === "analyzed" ? "status-complete" : ""}`}>{statusLabels[projectStatus(project.data)]}</span></div><p>{project.data.description || "No description has been added yet."}</p></div><div className="detail-actions"><Link className="button button-secondary" to={`/projects/${projectId}/edit`}>Edit details</Link><button type="button" className="button button-danger" disabled={deletion.isPending} onClick={() => window.confirm(`Delete ${project.data.name}?`) && deletion.mutate()}>{deletion.isPending ? "Deleting…" : "Delete project"}</button></div></header>
     {deletion.isError && <p className="form-error" role="alert">{deletion.error instanceof Error ? deletion.error.message : "Project could not be deleted. Please try again."}</p>}
     <section className="content-panel overview-summary" aria-labelledby="overview-summary-title"><h2 id="overview-summary-title">Project summary</h2>
       <div className="overview-location"><div><span>Project location</span><strong title={location.data ? label : undefined}>{location.data ? shortLocation : "Location not set"}</strong></div><Link to={`/projects/${projectId}/location`}>{location.data ? "Edit location" : "Set project location"}</Link></div>

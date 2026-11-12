@@ -15,6 +15,7 @@ function open(route: string, role = "ADMIN", respond?: (path: string, init?: Req
   const fetch = vi.fn(async (url: string, init?: RequestInit) => {
     const path = new URL(url).pathname;
     if (path.endsWith("/users/me")) return json({ ...account, role });
+    if (path === "/api/v1/projects/workspace") return json({projects:[],total_projects:0,analyzed_projects:0,in_progress:0,latest_analysis:null});
     if (path === "/api/v1/projects") return json([]);
     return respond?.(path + new URL(url).search, init) ?? json({ total_users: 7, active_users: 5, total_projects: 12, panel_models: 9 });
   });
@@ -30,7 +31,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 test.each(["/admin", "/admin/users", "/admin/panels"])("blocks USER access to %s without requesting admin data", async (route) => {
   const fetch = open(route, "USER");
-  expect(await screen.findByRole("heading", { name: /good to see you/i })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: /your solar workspace/i })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Administration" })).not.toBeInTheDocument();
   expect(fetch.mock.calls.some(([url]) => url.includes("/api/v1/admin"))).toBe(false);
 });

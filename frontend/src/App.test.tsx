@@ -45,8 +45,8 @@ describe("SolarPlan application routes", () => {
   });
 
   test("shows the real project status on the overview", async () => {
-    const projects = [{ id: "p1", name: "Family house", description: null, status: "analyzed", created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-04T10:00:00Z" }];
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(json(user)).mockResolvedValueOnce(json(projects)));
+    const projects = [{ id: "p1", name: "Family house", description: null, status: "analyzed", analysis_status: "analyzed", created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-04T10:00:00Z" }];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(json(user)).mockResolvedValueOnce(json({projects,total_projects:1,analyzed_projects:1,in_progress:0,latest_analysis:null})));
     sessionStorage.setItem("solarplan.access_token", "test-token");
 
     renderApp("/dashboard");
@@ -96,7 +96,7 @@ describe("SolarPlan application routes", () => {
   });
 
   test("keeps roof management available when a project is ready for analysis", async () => {
-    const project = { id: "p1", name: "Family house", description: null, status: "analyzed", created_at: "", updated_at: "" };
+    const project = { id: "p1", name: "Family house", description: null, status: "analyzed", analysis_status: "analyzed", created_at: "", updated_at: "" };
     const location = { id: "loc1", project_id: "p1", lat: 43.8563, lon: 18.4131, location_label: "Sarajevo", created_at: "", updated_at: "" };
     const panel = { id: "panel1", manufacturer: "LONGi", model_sku: "LR5-54HTH-435M", power_wp: 435 };
     const layout = { id: "l1", project_id: "p1", roof_surface_id: "s1", solar_panel_id: "panel1", solar_panel: panel, panel_count: 12, installed_kwp: 5.22 };
@@ -327,11 +327,11 @@ describe("SolarPlan application routes", () => {
     const checkboxes = screen.getAllByRole("checkbox");
     fireEvent.click(checkboxes[0]);
     fireEvent.click(checkboxes[1]);
-    fireEvent.click(screen.getByRole("button", { name: /compare selected/i }));
+    fireEvent.click(screen.getByRole("button", { name: /compare simulations/i }));
 
-    expect(await screen.findByRole("heading", { name: /compare simulations/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /system-level differences/i })).toBeInTheDocument();
-    expect(screen.getByText("+1,300 kWh")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /simulation comparison/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /comparison summary/i })).toBeInTheDocument();
+    expect(screen.getByText("+1,300 kWh/year")).toBeInTheDocument();
     expect(screen.getByText(/roof-surface-level differences are intentionally excluded/i)).toBeInTheDocument();
     expect(String(fetchMock.mock.calls[2][0])).toContain("baseline_id=older&comparison_id=newer");
   });

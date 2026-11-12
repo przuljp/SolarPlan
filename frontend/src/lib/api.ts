@@ -70,6 +70,7 @@ export const api = {
   login: (input: LoginInput) => request<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify(input) }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   currentUser: () => request<User>("/users/me"),
+  workspace: () => request<import("../types/api").Workspace>("/projects/workspace"),
   projects: () => request<Project[]>("/projects"),
   project: (id: string) => request<Project>(`/projects/${id}`),
   createProject: (input: ProjectInput) => request<Project>("/projects", { method: "POST", body: JSON.stringify(input) }),

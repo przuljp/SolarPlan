@@ -36,6 +36,7 @@ from app.schemas.energy_simulation import (
     MonthlyEnergyComparisonRead,
 )
 from app.services import panel_layout_service, project_service
+from app.services.project_freshness import configuration_fingerprint
 
 METHOD_VERSION = "solarplan-pvgis-v1"
 
@@ -204,6 +205,7 @@ async def run_simulation(
         annual_kwh=annual_kwh,
         specific_yield_kwh_per_kwp=round(annual_kwh / installed_kwp, 2),
         input_snapshot={
+            "configuration_fingerprint": configuration_fingerprint(location, surfaces),
             "location": {
                 "lat": location.lat,
                 "lon": location.lon,

@@ -31,7 +31,7 @@ export function RoofSurfacesPage() {
   const analysisReady = Boolean(surfaces.data?.length) && surfaces.data!.every((item) => item.panel_layout);
   return <main className="workspace-page roof-surfaces-page roof-surfaces-redesign">
     <Link className="back-link" to={`/projects/${projectId}`}>← Project overview</Link>
-    <header className="project-detail-heading"><div><h1>Roof surfaces</h1><p>Manage each roof surface, review saved panel layouts, and prepare your energy estimate.</p></div><Link className="button button-primary" to={`/projects/${projectId}/roof-surfaces/new`}>Add roof surface <ArrowIcon /></Link></header>
+    <header className="project-detail-heading"><div><h1>Roof surfaces</h1><p>Manage each roof surface, review saved panel layouts, and prepare your energy estimate.</p></div>{surfaces.data.length > 0 && <Link className="button button-primary" to={`/projects/${projectId}/roof-surfaces/new`}>Add roof surface <ArrowIcon /></Link>}</header>
     {search.get("saved") && <div className="roof-save-notice" role="status"><span>Panel layout saved.</span><button type="button" aria-label="Dismiss saved notification" onClick={() => { const next = new URLSearchParams(search); next.delete("saved"); setSearch(next, { replace: true }); }}>Dismiss</button></div>}
     {remove.isError && <p className="form-error" role="alert">{remove.error instanceof Error ? remove.error.message : "The surface could not be deleted. Please try again."}</p>}
     <dl className="roof-summary-stats" aria-label="Project summary">
@@ -40,7 +40,7 @@ export function RoofSurfacesPage() {
       <div><dt>Total capacity</dt><dd>{totalKwp.toFixed(2)} <small>kWp</small></dd></div>
     </dl>
     {sharedPanel && <p className="roof-shared-module">Shared panel model: <strong>{sharedPanel.manufacturer} {sharedPanel.model_sku}</strong></p>}
-    <div className={`roof-surface-grid ${surfaces.data.length === 1 ? "roof-single-surface" : ""}`}>
+    {surfaces.data.length > 0 && <div className={`roof-surface-grid ${surfaces.data.length === 1 ? "roof-single-surface" : ""}`}>
       {(surfaces.data ?? []).map((surface) => <article className="content-panel roof-surface-card" key={surface.id}>
         <div className="panel-heading"><div><RoofIcon /><h2>{surface.name}</h2></div><span className={`status-badge ${surface.panel_layout ? "status-complete" : ""}`}>{surface.panel_layout ? "Layout saved" : "Needs layout"}</span></div>
         <dl className="roof-card-facts">
@@ -52,8 +52,8 @@ export function RoofSurfacesPage() {
         </dl>
         <div className="surface-card-actions"><Link className="button button-secondary button-small" to={`/projects/${projectId}/roof-surfaces/${surface.id}/edit`}>Edit surface</Link><Link className="button button-primary button-small" to={surface.panel_layout ? `/projects/${projectId}/roof-surfaces/${surface.id}/layout?panel=${surface.panel_layout.solar_panel_id}` : `/projects/${projectId}/roof-surfaces/${surface.id}/panels`}>{surface.panel_layout ? "Review layout" : "Choose panel"} <ArrowIcon /></Link><button className="text-link danger-link" disabled={remove.isPending} aria-label={`Delete ${surface.name}`} onClick={() => window.confirm(`Delete ${surface.name}?`) && remove.mutate(surface.id)}>Delete</button></div>
       </article>)}
-    </div>
+    </div>}
     {analysisReady && <section className="roof-analysis-cta"><div><h2>Explore your roof’s energy potential</h2><p>Estimate monthly and annual electricity production across your saved roof surfaces.</p></div><Link className="button button-primary" to={`/projects/${projectId}/analysis`}>Open production analysis <ArrowIcon /></Link></section>}
-    {!surfaces.data?.length && <section className="content-panel roof-placeholder"><RoofIcon /><h2>No roof surfaces yet</h2><p>Start with one roof side. You can add the others afterwards.</p><Link className="button button-primary" to={`/projects/${projectId}/roof-surfaces/new`}>Add first surface <ArrowIcon /></Link></section>}
+    {!surfaces.data?.length && <section className="content-panel roof-empty-state"><span className="roof-empty-icon" aria-hidden="true"><RoofIcon /></span><h2>Start with your first roof surface</h2><p>Add the dimensions, direction and slope of your roof to begin planning your solar system.</p><Link className="button button-primary" to={`/projects/${projectId}/roof-surfaces/new`}>Add roof surface <ArrowIcon /></Link></section>}
   </main>;
 }

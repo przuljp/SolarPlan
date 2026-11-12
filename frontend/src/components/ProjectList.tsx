@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { statusLabels } from "../lib/project-status";
 import type { Project } from "../types/api";
 import { ArrowIcon, PlusIcon, RoofIcon } from "./Icons";
 
@@ -36,7 +37,7 @@ export function ProjectList({
   return (
     <div className="project-list">
       {projects.map((project, index) => {
-        const status = projectStatus[project.status];
+        const status = project.analysis_status ? { label:statusLabels[project.analysis_status], complete:project.analysis_status === "analyzed" } : projectStatus[project.status];
         return <Link className="project-row" to={`/projects/${project.id}`} key={project.id}>
           <span className="project-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
           <span className="project-main">

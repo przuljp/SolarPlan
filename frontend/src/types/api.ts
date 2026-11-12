@@ -3,7 +3,9 @@ export type AdminUser = User & { project_count: number };
 export type AdminUsersPage = { items: AdminUser[]; total: number; offset: number; limit: number };
 export type AdminStats = { total_users: number; active_users: number; total_projects: number; panel_models: number };
 export type ProjectStatus = "draft" | "ready_for_analysis" | "analyzed";
-export type Project = { id: string; name: string; description: string | null; status: ProjectStatus; created_at: string; updated_at: string };
+export type AnalysisStatus = "not_started" | "in_progress" | "analyzed" | "needs_recalculation";
+export type Workspace = { projects: Project[]; total_projects: number; analyzed_projects: number; in_progress: number; latest_analysis: (EnergySimulationSummary & { project_name: string; analysis_status: AnalysisStatus }) | null };
+export type Project = { analysis_status?: AnalysisStatus | null; id: string; name: string; description: string | null; status: ProjectStatus; created_at: string; updated_at: string };
 export type ProjectInput = { name: string; description?: string | null };
 
 export type ProjectLocationInput = { lat: number; lon: number; location_label?: string | null };

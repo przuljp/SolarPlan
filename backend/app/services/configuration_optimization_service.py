@@ -37,6 +37,7 @@ from app.services import (
     layout_engine,
     project_service,
 )
+from app.services.project_freshness import configuration_fingerprint
 
 METHODOLOGY = "solarplan-optimizer-v1"
 BEAM_WIDTH = 4000
@@ -398,6 +399,7 @@ async def select_candidate(
     panel = next((item for item in panels if str(item.id) == candidate["panel"]["id"]), None)
     if panel is None:
         raise StaleOptimizationError
+    fingerprint_layouts = {}
     surfaces_by_id = {str(surface.id): surface for surface in surfaces}
     for result in candidate["surfaces"]:
         surface = surfaces_by_id.get(result["roof_surface_id"])
@@ -419,6 +421,7 @@ async def select_candidate(
             "utilization_percent": calculation["utilization_percent"],
             "layout_json": calculation["positions"],
         }
+        fingerprint_layouts[str(surface.id)] = values
         if layout is None:
             panel_layout_repository.add(
                 session,
@@ -456,6 +459,9 @@ async def select_candidate(
         annual_kwh=candidate["annual_kwh"],
         specific_yield_kwh_per_kwp=candidate["specific_yield_kwh_per_kwp"],
         input_snapshot={
+            "configuration_fingerprint": configuration_fingerprint(
+                location, surfaces, fingerprint_layouts
+            ),
             "source": "configuration_optimizer",
             "optimization_id": str(optimization.id),
             "candidate_id": candidate_id,

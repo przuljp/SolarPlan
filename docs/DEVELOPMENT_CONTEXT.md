@@ -1,5 +1,35 @@
 # SolarPlan — razvojni kontekst
 
+> Dashboard workspace, 12. novembar 2026: naslov je Your solar workspace, uz tri
+> kompaktna brojača, listu projekata bez rednih brojeva i posljednju sačuvanu analizu.
+> Novi read-only `GET /projects/workspace` agregira vlasničke projekte i najnovije
+> simulacije grupnim upitima; lista i detalji projekta dodaju `analysis_status` bez
+> izmjene starog `status` polja ili migracije. Dashboard i Project Overview koriste
+> istu izvedenu logiku: not_started, in_progress, analyzed, needs_recalculation.
+> Naziv/opis projekta nisu ulazi simulacije. Nove manual/optimizer simulacije dodaju
+> deterministički configuration_fingerprint u postojeći input_snapshot JSON za lokaciju,
+> geometriju, razmake, orijentaciju/broj panela i sačuvani model/snagu panela. Stari
+> snapshot-i nemaju sve dimenzije; zato se konzervativno provjeravaju sačuvani ulazi
+> i datumi izmjena lokacije, ploha i rasporeda, nikad project.updated_at. Promjena
+> naziva plohe ili samo naziva lokacije može kod tih starih rezultata tražiti ponovni
+> obračun; novo fingerprint poređenje ignoriše te opisne podatke. Dashboard ne poziva
+> PVGIS, a View analysis otvara tačan istorijski rezultat. UI je pregledan na desktopu,
+> 800px i 390px sa sintetičkim podacima. Frontend: 119 testova i build prolaze.
+
+
+> Simulation History, 12. novembar 2026: uklonjena je statistička traka i veliki comparison
+> banner. Kompaktna lista prikazuje najnoviji rezultat, model i tri ključne metrike.
+> Mogu se izabrati najviše dvije simulacije; sticky akcije su na kraju liste i ne
+> prekrivaju njene redove. Postojeća comparison ruta hronološki prikazuje stariji i
+> noviji snapshot, tabelu metrika, godišnju apsolutnu/procentualnu razliku i zajednički
+> grafikon sačuvanih mjesečnih vrijednosti s tooltipom i dostupnom tabelom. Nulta
+> proizvodnja i nepotpuni mjesečni podaci imaju eksplicitno objašnjenje. Detalji koriste
+> zasebnu read-only komponentu sa panelima, površinama, energetskim rezultatima,
+> izvozom i postojećim AI objašnjenjem. Backend, API i PVGIS proračuni nisu mijenjani.
+> Provjere: 114 frontend testova i production build prolaze; vizuelni QA sa sintetičkim
+> podacima na desktopu, 800px i 390px. Ostaje postojeće upozorenje o JS chunk-u >500 kB.
+
+
 > Geometrija i razmaci, 12. novembar 2026: sekcija Roof Surface Dimensions koristi SVG
 > kartice Rectangle/Trapezoid, s tastaturnim izborom i prilagođenim mobilnim prikazom.
 > Novi trapezi se automatski centriraju formulom `(bottom_width_m - top_width_m) / 2`.

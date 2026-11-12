@@ -6,7 +6,7 @@ from app.core.exceptions import ProjectNotFoundError
 from app.dependencies.auth import CurrentUserDependency, SessionDependency
 from app.schemas.error import ErrorResponse
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
-from app.services import project_service
+from app.services import project_service, workspace_service
 
 router = APIRouter(
     prefix="/projects",
@@ -47,8 +47,12 @@ async def list_projects(
     current_user: CurrentUserDependency,
     session: SessionDependency,
 ) -> list[ProjectRead]:
-    projects = await project_service.list_projects(session, current_user.id)
-    return [ProjectRead.model_validate(project) for project in projects]
+    return (await workspace_service.workspace(session, current_user.id))["projects"]
+
+
+@router.get("/workspace")
+async def read_workspace(current_user: CurrentUserDependency, session: SessionDependency):
+    return await workspace_service.workspace(session, current_user.id)
 
 
 @router.get(
@@ -62,10 +66,10 @@ async def read_project(
     session: SessionDependency,
 ) -> ProjectRead:
     try:
-        project = await project_service.get_project(session, project_id, current_user.id)
+        await project_service.get_project(session, project_id, current_user.id)
     except ProjectNotFoundError as error:
         raise project_not_found() from error
-    return ProjectRead.model_validate(project)
+    return (await workspace_service.workspace(session, current_user.id, project_id))["projects"][0]
 
 
 @router.patch(
