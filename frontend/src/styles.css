@@ -666,7 +666,6 @@ select { width: 100%; min-height: 3.1rem; padding: 0.72rem 2.4rem 0.72rem 0.85re
 .roof-shape-illustration path { fill: none; stroke: var(--ink-soft); stroke-width: 1; }
 .roof-shape-choice.is-selected polygon { fill: #f5e0d2; stroke: var(--accent); }
 .geometry-measure-note { margin-top: 0; font-size: .85rem; }
-.geometry-layout-note { max-width: 70ch; margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.6; }
 .saved-geometry-offset { padding: 1rem; border: 1px solid var(--line); background: var(--ground); }
 .surface-shape-value small {
   display: block;
@@ -1229,3 +1228,101 @@ select { width: 100%; min-height: 3.1rem; padding: 0.72rem 2.4rem 0.72rem 0.85re
  .consumption-input-summary dl { gap:1rem; }
 }
 .consumption-segmented input { min-height: 0; }
+
+/* Project overview: summary, primary workflow, then secondary analysis. */
+.project-overview-page .overview-heading { align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem; }
+.overview-title { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; }
+.project-overview-page .overview-title h1 { font-size: clamp(2.2rem,3.5vw,3.4rem); overflow-wrap:anywhere; margin:0; }
+.project-overview-page .overview-heading > div { min-width:0; }
+.project-overview-page .overview-heading p { margin:.6rem 0 0; max-width:65ch; }
+.overview-summary { padding:1.5rem; box-shadow:none; }
+.overview-summary h2, .overview-main-actions > h2, .overview-additional h2 { margin:0 0 1rem; font-size:1.5rem; }
+.overview-location { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-bottom:1.25rem; border-bottom:1px solid var(--line); }
+.overview-location > div { min-width:0; }
+.overview-location span, .overview-module > span { display:block; font-size:.78rem; color:var(--ink-soft); margin-bottom:.3rem; }
+.overview-location strong { display:block; overflow-wrap:anywhere; font-weight:650; }
+.overview-location > a { flex-shrink:0; font-size:.85rem; color:var(--accent-dark); font-weight:650; }
+.overview-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin:1.3rem 0; }
+.overview-stats dt { color:var(--ink-soft); font-size:.8rem; }
+.overview-stats dd { margin:.4rem 0 0; font-size:1.9rem; font-variant-numeric:tabular-nums; }
+.overview-stats small { font-size:.85rem; }
+.overview-module { margin:0; padding-top:1rem; border-top:1px solid var(--line); }
+.overview-module strong { font-size:.95rem; overflow-wrap:anywhere; }
+.overview-main-actions { margin-top:1.8rem; }
+.overview-action-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.overview-action { padding:1.2rem; background:var(--paper); border:1px solid var(--line); text-decoration:none; color:var(--ink); }
+.overview-action:hover { border-color:var(--ink); }
+.overview-action strong { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.overview-action svg, .overview-additional svg { width:1rem; flex-shrink:0; }
+.overview-action > span, .overview-action small { display:block; margin-top:.4rem; font-size:.85rem; color:var(--ink-soft); }
+.overview-action small { font-size:.75rem; }
+.overview-production { display:flex; align-items:center; justify-content:space-between; gap:1.5rem; margin-top:1.25rem; padding:1.2rem 0; }
+.overview-production h3 { margin:0 0 .4rem; font-family:"Newsreader",Georgia,serif; font-size:1.4rem; }
+.overview-production p { margin:0; color:var(--ink-soft); font-size:.85rem; }
+.overview-additional { padding-top:1.2rem; margin-top:.8rem; border-top:1px solid var(--line); }
+.overview-additional h2 { font-size:1.25rem; }
+.overview-additional > div { display:flex; flex-wrap:wrap; gap:1.2rem 2rem; }
+.overview-additional a { display:inline-flex; gap:.6rem; align-items:center; font-size:.85rem; color:var(--ink-soft); font-weight:650; padding:.3rem 0; }
+.overview-setup-note { color:var(--ink-soft); margin-top:1.5rem; }
+@media(max-width:720px) {
+ .project-overview-page .overview-heading { flex-direction:column; }
+ .project-overview-page .detail-actions { flex-direction:row; flex-wrap:wrap; align-items:center; }
+ .overview-action-grid { grid-template-columns:minmax(0,1fr); }
+ .overview-summary { padding:1.1rem; }
+ .overview-location { flex-direction:column; align-items:flex-start; }
+ .overview-stats { gap:.7rem; }
+ .overview-stats dt { font-size:.72rem; }
+ .overview-stats dd { font-size:1.5rem; }
+ .overview-stats small { display:block; }
+ .overview-production { flex-direction:column; align-items:stretch; }
+ .overview-production .button { width:100%; }
+}
+
+/* Add/edit roof surfaces share the workspace width, with bounded input groups. */
+.roof-surface-form-page { width: 100%; max-width: none; }
+.roof-surface-form-page .form-page-heading { max-width: 72ch; }
+.roof-surface-form-page .roof-form { width: 100%; max-width: none; }
+.roof-surface-form-page .form-section:first-of-type > label { max-width: 38rem; }
+.roof-surface-form-page .field-grid { max-width: 60rem; }
+.roof-surface-form-page .form-section > label { max-width: 38rem; }
+.roof-surface-form-page .section-copy { max-width: 72ch; }
+.roof-surface-form-page .roof-direction-options { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.roof-surface-form-page .roof-slope-options { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.roof-surface-form-page .form-actions { justify-content: flex-end; }
+@media(min-width:1600px) {
+ .roof-surface-form-page .roof-direction-options { grid-template-columns:repeat(8,minmax(0,1fr)); }
+ .roof-surface-form-page .roof-direction-options .roof-choice { padding:.85rem .65rem; }
+}
+@media(max-width:720px) {
+ .roof-surface-form-page .roof-direction-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .roof-surface-form-page .roof-slope-options { grid-template-columns:minmax(0,1fr); }
+ .roof-surface-form-page .roof-slope-choice > span { width:100%; grid-template-columns:96px minmax(0,1fr); column-gap:.8rem; }
+ .roof-surface-form-page .roof-slope-illustration { grid-row:span 3; align-self:center; width:96px; }
+ .roof-surface-form-page .form-actions { flex-wrap:wrap; }
+ .roof-surface-form-page .form-actions > * { flex:0 1 auto; }
+}
+@media(max-width:340px) { .roof-surface-form-page .roof-direction-options { grid-template-columns:minmax(0,1fr); } }
+@media(min-width:721px) and (max-width:1100px) {
+ .roof-surface-form-page .roof-direction-options .roof-choice,
+ .roof-surface-form-page .roof-slope-options .roof-choice { flex-direction:column; }
+ .roof-surface-form-page .roof-direction-options .roof-choice { padding:.75rem; }
+}
+
+/* Compact inputs only within the add/edit roof surface form. */
+.roof-surface-form-page .form-section:first-of-type > label { max-width:39rem; }
+.roof-surface-form-page .form-section:first-of-type input,
+.roof-surface-form-page .roof-dimension-inputs input,
+.roof-surface-form-page .saved-geometry-offset input { min-height:0; height:46px; padding:.6rem .8rem; }
+.roof-dimension-inputs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; width:100%; max-width:36rem; }
+.roof-dimension-inputs.is-trapezoid { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:54rem; }
+.roof-dimension-inputs label { min-width:0; gap:.4rem; }
+.roof-unit-input { position:relative; display:block; min-width:0; }
+.roof-surface-form-page .roof-unit-input input { width:100%; padding-right:3rem; }
+.roof-unit-input > span { position:absolute; right:1.9rem; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--ink-soft); font-size:.8rem; font-weight:500; }
+.roof-surface-form-page .roof-dimension-inputs input:user-invalid,
+.roof-surface-form-page .form-section:first-of-type input:user-invalid { border-color:var(--danger); }
+@media(max-width:1000px) { .roof-dimension-inputs.is-trapezoid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .roof-dimension-inputs, .roof-dimension-inputs.is-trapezoid { grid-template-columns:minmax(0,1fr); } }
+
+.roof-surface-form-page .roof-dimension-inputs,
+.roof-surface-form-page .roof-dimension-inputs.is-trapezoid { max-width:none; }

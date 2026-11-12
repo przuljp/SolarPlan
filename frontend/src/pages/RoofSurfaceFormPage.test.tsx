@@ -132,7 +132,9 @@ test("shows illustrated rectangle dimensions without editable layout spacing", (
   expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
   expect(screen.queryByRole("spinbutton", { name: /top width|bottom width|offset|edge margin|panel gap/i })).not.toBeInTheDocument();
   expect(screen.queryByText("Layout clearances")).not.toBeInTheDocument();
-  expect(screen.getByText(/not universal safety standards/)).toBeInTheDocument();
+  expect(screen.queryByText(/not universal safety standards/)).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Layout spacing")).not.toBeInTheDocument();
+  expect(screen.getByText("Measure the actual roof surface along its slope, not the dimensions of the entire house.")).toBeInTheDocument();
 });
 
 test.each([[10, 6, 2], [12, 4, 4]])("centers a new trapezoid with bottom %s and top %s at offset %s", async (bottom, top, offset) => {
