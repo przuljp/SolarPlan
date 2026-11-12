@@ -1,5 +1,5 @@
 import type {
-  AiExplanation, AiExplanationInput,
+  AdminStats, AdminUsersPage, PanelInput, AiExplanation, AiExplanationInput,
   ConfigurationOptimization, ConsumptionProfile, ConsumptionProfileInput, EnergyComparison, EnergySimulation, EnergySimulationInput, EnergySimulationSummary, GeocodingResult, LoginInput, LayoutInput, LayoutPreview, OptimizationInput, OptimizationSelection, PanelLayout, SimulationComparison,
   Project, ProjectInput, ProjectLocation, ProjectLocationInput, RegisterInput,
   RoofSurface, RoofSurfaceInput, SolarPanel, TokenResponse, User,
@@ -37,6 +37,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  adminStats: () => request<AdminStats>("/admin/dashboard"),
+  adminUsers: (email: string, offset: number) => request<AdminUsersPage>(`/admin/users?${new URLSearchParams({ email, offset: String(offset), limit: "20" })}`),
+  setUserActivity: (id: string, is_active: boolean) => request<User>(`/admin/users/${id}/activity`, { method: "PATCH", body: JSON.stringify({ is_active }) }),
+  adminPanels: () => request<SolarPanel[]>("/admin/panels"),
+  createPanel: (input: PanelInput) => request<SolarPanel>("/admin/panels", { method: "POST", body: JSON.stringify(input) }),
+  updatePanel: (id: string, input: PanelInput) => request<SolarPanel>(`/admin/panels/${id}`, { method: "PUT", body: JSON.stringify(input) }),
+  setPanelActivity: (id: string, is_active: boolean) => request<SolarPanel>(`/admin/panels/${id}/activity`, { method: "PATCH", body: JSON.stringify({ is_active }) }),
+  deletePanel: (id: string) => request<void>(`/admin/panels/${id}`, { method: "DELETE" }),
   aiStatus: () => request<{ available: boolean }>("/ai/status"),
   explainSimulation: (projectId: string, simulationId: string, input: AiExplanationInput) => request<AiExplanation>(`/projects/${projectId}/simulations/${simulationId}/explanation`, { method: "POST", body: JSON.stringify(input) }),
   downloadSimulationReport: async (projectId: string, simulationId: string, format: "pdf" | "csv") => {

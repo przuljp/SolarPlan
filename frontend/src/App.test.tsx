@@ -64,7 +64,9 @@ describe("SolarPlan application routes", () => {
     expect(screen.queryByLabelText(/top width/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: /trapezoid/i }));
     expect(screen.getByLabelText(/top width/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/top edge offset/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/top edge offset/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/surface width/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /bottom width/i })).toBeInTheDocument();
   });
   test("shows the split project location form", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(json(user)).mockResolvedValueOnce(new Response(null, { status: 404 })));

@@ -107,3 +107,33 @@ def test_zero_fit_returns_an_empty_layout(panel) -> None:
     assert layout["maximum_panel_count"] == 0
     assert layout["positions"] == []
     assert layout["installed_kwp"] == 0
+
+
+def test_half_meter_planning_margin_keeps_panels_inside_the_roof(roof, panel) -> None:
+    roof.edge_margin_m = 0.5
+    roof.panel_gap_m = 0.02
+    layout = calculate_layout(roof, panel, "portrait")
+
+    assert layout["panel_count"] == 20
+    assert layout["edge_margin_m"] == 0.5
+    assert layout["panel_gap_m"] == 0.02
+    assert layout["positions"][0]["x_m"] == 0.5
+    assert layout["positions"][0]["y_m"] == 0.5
+    for position in layout["positions"]:
+        assert position["x_m"] + position["width_m"] <= roof.bottom_width_m - 0.5
+        assert position["y_m"] + position["length_m"] <= roof.length_m - 0.5
+
+
+def test_saved_asymmetric_trapezoid_keeps_its_offset_and_custom_spacing(trapezoid_roof, panel):
+    trapezoid_roof.top_offset_m = 0.75
+    trapezoid_roof.edge_margin_m = 0.42
+    trapezoid_roof.panel_gap_m = 0.035
+    first = calculate_layout(trapezoid_roof, panel, "portrait")
+    again = calculate_layout(trapezoid_roof, panel, "portrait")
+
+    assert first == again
+    assert first["roof_top_offset_m"] == 0.75
+    assert first["roof_polygon"][0] == {"x_m": 0.75, "y_m": 0.0}
+    assert first["edge_margin_m"] == 0.42
+    assert first["panel_gap_m"] == 0.035
+    assert first["panel_count"] > 0

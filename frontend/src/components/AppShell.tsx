@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
 import { Brand } from "./Brand";
@@ -7,6 +7,17 @@ import { GridIcon, LogoutIcon, RoofIcon, SettingsIcon } from "./Icons";
 export function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdminArea = useLocation().pathname.startsWith("/admin");
+  const navigation = isAdminArea ? <>
+    <NavLink to="/admin" end><GridIcon /><span>Dashboard</span></NavLink>
+    <NavLink to="/admin/panels"><RoofIcon /><span>Panel catalog</span></NavLink>
+    <NavLink to="/admin/users"><SettingsIcon /><span>Users</span></NavLink>
+  </> : <>
+    <NavLink to="/dashboard"><GridIcon /><span>Overview</span></NavLink>
+    <NavLink to="/projects"><RoofIcon /><span>Projects</span></NavLink>
+    <NavLink to="/settings"><SettingsIcon /><span>Settings</span></NavLink>
+    {user?.role === "ADMIN" && <NavLink to="/admin"><GridIcon /><span>Administration</span></NavLink>}
+  </>;
 
   async function handleLogout() {
     await logout();
@@ -23,20 +34,9 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Brand compact />
+        <Brand compact to={isAdminArea ? "/admin" : "/dashboard"} />
         <nav className="side-nav" aria-label="Main navigation">
-          <NavLink to="/dashboard">
-            <GridIcon />
-            Overview
-          </NavLink>
-          <NavLink to="/projects">
-            <RoofIcon />
-            Projects
-          </NavLink>
-          <NavLink to="/settings">
-            <SettingsIcon />
-            Settings
-          </NavLink>
+          {navigation}
         </nav>
         <div className="account-block">
           <span className="avatar" aria-hidden="true">{initials}</span>
@@ -51,7 +51,7 @@ export function AppShell() {
       </aside>
       <div className="app-workspace">
         <header className="mobile-header">
-          <Brand compact />
+          <Brand compact to={isAdminArea ? "/admin" : "/dashboard"} />
           <div className="mobile-account">
             <span className="avatar" aria-hidden="true">{initials}</span>
             <button className="icon-button mobile-logout" type="button" onClick={handleLogout}>
@@ -61,10 +61,8 @@ export function AppShell() {
           </div>
         </header>
         <Outlet />
-        <nav className="mobile-nav" aria-label="Mobile navigation">
-          <NavLink to="/dashboard"><GridIcon /><span>Overview</span></NavLink>
-          <NavLink to="/projects"><RoofIcon /><span>Projects</span></NavLink>
-          <NavLink to="/settings"><SettingsIcon /><span>Settings</span></NavLink>
+        <nav className={`mobile-nav ${user?.role === "ADMIN" && !isAdminArea ? "admin-mobile-nav" : ""}`} aria-label="Mobile navigation">
+          {navigation}
         </nav>
       </div>
     </div>

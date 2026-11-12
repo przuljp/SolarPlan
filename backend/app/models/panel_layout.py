@@ -40,6 +40,7 @@ class PanelLayout(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("solar_panels.id", ondelete="RESTRICT"), nullable=False
     )
     orientation: Mapped[str] = mapped_column(String(16), nullable=False)
+    panel_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
     rows: Mapped[int] = mapped_column(Integer, nullable=False)
     columns: Mapped[int] = mapped_column(Integer, nullable=False)
     panel_count: Mapped[int] = mapped_column(Integer, nullable=False)

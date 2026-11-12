@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import CheckConstraint, Date, Float, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Date, Float, Integer, String, Text, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -36,3 +36,4 @@ class SolarPanel(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     bih_source_name: Mapped[str] = mapped_column(String(160), nullable=False)
     bih_source_url: Mapped[str] = mapped_column(Text, nullable=False)
     verified_at: Mapped[date] = mapped_column(Date, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())

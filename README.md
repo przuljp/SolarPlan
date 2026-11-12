@@ -72,6 +72,12 @@ npm test
 
 ## Current status
 
+The application now supports USER and ADMIN roles, with separate administration routes at
+`/admin`, `/admin/panels`, and `/admin/users`. Admins manage the panel catalog and account
+activity and see database-backed aggregate statistics. Private projects remain owner-scoped.
+See [Administration](docs/ADMIN.md) for migration details, endpoints, tests, and the controlled
+CLI procedure for assigning the first administrator role.
+
 The authenticated project workflow, map-based location selection, multi-surface rectangular/trapezoidal roof modeling, verified panel catalog, polygon-aware layouts, PVGIS analysis, household consumption comparison, configuration optimizer, simulation history, and two-simulation comparison are implemented.
 
 Saved simulations can be exported from Production Analysis or Simulation Details using **Download PDF** and **Download CSV**. Reports include the saved system inputs, panels, actual system losses, annual/monthly production, roof contributions, calculation date, and limitations. Exports use the immutable simulation snapshot; they do not request PVGIS again or include the current consumption profile.

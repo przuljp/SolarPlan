@@ -18,7 +18,8 @@ Stack:
 - Follow established project conventions before introducing new patterns.
 
 ## Scope
-- The application currently has no admin role.
+- Roles are USER and ADMIN. Administration manages the panel catalog and account activity only;
+  private projects remain owner-scoped, including for administrators.
 - Prioritize user-facing functionality.
 - Focus on energy analysis, not financial ROI.
 - Do not implement advanced satellite roof polygon detection or LiDAR features unless explicitly requested.

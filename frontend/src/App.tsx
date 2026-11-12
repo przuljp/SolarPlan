@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "./components/AppShell";
+import { AdminRoute } from "./components/AdminRoute";
+import { AdminDashboardPage, AdminPanelsPage, AdminUsersPage } from "./pages/AdminPages";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthPage } from "./pages/AuthPage";
 import { ConsumptionPage } from "./pages/ConsumptionPage";
@@ -27,6 +29,11 @@ export default function App() {
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/register" element={<AuthPage mode="register" />} />
     <Route element={<ProtectedRoute />}><Route element={<AppShell />}>
+      <Route element={<AdminRoute />}>
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/panels" element={<AdminPanelsPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+      </Route>
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/new" element={<ProjectFormPage mode="create" />} />

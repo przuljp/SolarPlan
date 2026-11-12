@@ -24,7 +24,7 @@ The core workflow is: create an account, create a project, choose a location, de
 
 ## Capabilities and Constraints
 
-- The only business role is a registered end user, and every private resource is owner-scoped.
+- Roles are USER and ADMIN. Administrators manage the panel catalog, account activity, and aggregate statistics. Every private project remains owner-scoped, including for administrators.
 - The application language is English.
 - Expert terminology is allowed when paired with plain-language explanations and explicit units such as kWp, kWh, m², degrees, and percent.
 - Desktop is primary for the two-dimensional roof planner, with a functional responsive mobile experience.

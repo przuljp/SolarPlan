@@ -17,7 +17,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const passwordId = useId();
   useEffect(() => setPasswordVisible(false), [mode]);
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={user.role === "ADMIN" ? "/admin" : "/dashboard"} replace />;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +39,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
         });
       }
       const destination = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-      navigate(destination || "/dashboard", { replace: true });
+      if (destination) navigate(destination, { replace: true });
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "Unable to connect to SolarPlan. Please try again.");
     } finally {

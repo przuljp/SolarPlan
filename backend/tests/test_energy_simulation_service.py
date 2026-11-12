@@ -29,9 +29,13 @@ from app.services.energy_simulation_service import (
     ("compass", "pvgis"),
     [
         (0, -180),
+        (45, -135),
         (90, -90),
+        (135, -45),
         (180, 0),
+        (225, 45),
         (270, 90),
+        (315, 135),
         (359, 179),
     ],
 )
@@ -87,8 +91,26 @@ def test_system_loss_requests_reject_values_outside_supported_range(loss: float)
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("azimuth", "tilt", "aspect"),
+    [
+        (0, 3, -180),
+        (45, 20, -135),
+        (90, 40, -90),
+        (135, 3, -45),
+        (180, 20, 0),
+        (225, 40, 45),
+        (270, 3, 90),
+        (315, 20, 135),
+        (172, 27, -8),
+        (180, 30, 0),
+    ],
+)
 async def test_custom_system_loss_is_forwarded_once_to_pvgis(
     monkeypatch: pytest.MonkeyPatch,
+    azimuth: float,
+    tilt: float,
+    aspect: float,
 ) -> None:
     session = AsyncMock()
     client = AsyncMock()
@@ -103,8 +125,8 @@ async def test_custom_system_loss_is_forwarded_once_to_pvgis(
         id=uuid4(),
         name="South roof",
         shape_type="rectangle",
-        tilt_deg=30,
-        azimuth_deg=180,
+        tilt_deg=tilt,
+        azimuth_deg=azimuth,
         panel_layout=layout,
     )
     location = SimpleNamespace(
@@ -160,6 +182,12 @@ async def test_custom_system_loss_is_forwarded_once_to_pvgis(
 
     parameters = client.calculate.await_args.args[0]
     assert parameters.loss == 9.5
+    assert parameters.angle == tilt
+    assert parameters.aspect == aspect
+    assert parameters.query_params()["angle"] == tilt
+    assert parameters.query_params()["aspect"] == aspect
+    assert result.input_snapshot["surfaces"][0]["azimuth_deg"] == azimuth
+    assert result.input_snapshot["surfaces"][0]["tilt_deg"] == tilt
     assert result.system_loss_percent == 9.5
     assert result.annual_kwh == 5000
     assert captured == [result]

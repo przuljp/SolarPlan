@@ -35,7 +35,7 @@ from app.schemas.energy_simulation import (
     EnergySimulationSummaryRead,
     MonthlyEnergyComparisonRead,
 )
-from app.services import project_service
+from app.services import panel_layout_service, project_service
 
 METHOD_VERSION = "solarplan-pvgis-v1"
 
@@ -178,9 +178,9 @@ async def run_simulation(
                 "installed_kwp": layout.installed_kwp,
                 "panel": {
                     "id": str(layout.solar_panel.id),
-                    "manufacturer": layout.solar_panel.manufacturer,
-                    "model_sku": layout.solar_panel.model_sku,
-                    "power_wp": layout.solar_panel.power_wp,
+                    "manufacturer": panel_layout_service.saved_panel(layout).manufacturer,
+                    "model_sku": panel_layout_service.saved_panel(layout).model_sku,
+                    "power_wp": panel_layout_service.saved_panel(layout).power_wp,
                     "pvtechchoice": parameters.pvtechchoice,
                 },
                 "pvgis_parameters": parameters.query_params(),

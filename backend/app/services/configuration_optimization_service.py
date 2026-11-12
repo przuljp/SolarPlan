@@ -269,7 +269,6 @@ async def run_optimization(
                 "A reliable annual consumption total is required for consumption matching."
             )
 
-    yields = await _surface_yields(session, location, surfaces, data.system_loss_percent, client)
     candidates: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     selected_panels = panels
@@ -285,8 +284,14 @@ async def run_optimization(
             raise OptimizationInputsIncompleteError(
                 "All roof surfaces must use one shared panel model."
             )
-        selected_panels = [next(panel for panel in panels if panel.id in panel_ids)]
+        selected_panels = [panel for panel in panels if panel.id in panel_ids]
+        if not selected_panels:
+            raise OptimizationInputsIncompleteError(
+                "The saved panel model is inactive. Existing simulations remain available, "
+                "but a new optimization requires an active model."
+            )
 
+    yields = await _surface_yields(session, location, surfaces, data.system_loss_percent, client)
     for panel in selected_panels:
         if data.criterion == "manual":
             calculations = [
@@ -404,6 +409,7 @@ async def select_candidate(
         layout = await panel_layout_repository.get_by_surface_id(session, surface.id)
         values = {
             "solar_panel_id": panel.id,
+            "panel_snapshot": _panel_snapshot(panel),
             "orientation": calculation["orientation"],
             "rows": calculation["rows"],
             "columns": calculation["columns"],

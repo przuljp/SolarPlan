@@ -37,10 +37,19 @@ async def get_current_user(
         raise unauthorized from error
 
     user = await user_repository.get_by_id(session, user_id)
-    if user is None:
+    if user is None or not user.is_active:
         raise unauthorized
     return user
 
 
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
+
+
+async def get_admin_user(current_user: CurrentUserDependency) -> User:
+    if current_user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Administrator access is required.")
+    return current_user
+
+
+AdminUserDependency = Annotated[User, Depends(get_admin_user)]
 

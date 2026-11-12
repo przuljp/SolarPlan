@@ -1,5 +1,36 @@
 # SolarPlan — razvojni kontekst
 
+> Geometrija i razmaci, 12. novembar 2026: sekcija Roof Surface Dimensions koristi SVG
+> kartice Rectangle/Trapezoid, s tastaturnim izborom i prilagođenim mobilnim prikazom.
+> Novi trapezi se automatski centriraju formulom `(bottom_width_m - top_width_m) / 2`.
+> Postojeće asimetrične plohe zadržavaju tačan offset i jedine imaju polje za njegovo
+> uređivanje. Kod sačuvanih simetričnih trapeza offset ostaje tačan dok su širine iste;
+> eksplicitna izmjena širina ponovo centrira tu simetričnu plohu. Uklonjeni su Layout
+> Clearances i Center top edge. Novi razmaci su centralizovani u
+> `frontend/src/lib/roof-defaults.ts`: rubni razmak 0,5 m, razmak panela 0,02 m.
+> Sačuvani razmaci se uvijek ponovo šalju bez promjene; UI ih prikazuje samo informativno,
+> kao pretpostavke preliminarnog planiranja, ne sigurnosni standard. API, baza, geometrijski
+> algoritam i PVGIS nisu mijenjani. Provjere: 65 frontend i 51 ciljani backend test prolaze,
+> kao i production build i Ruff. Vizuelni QA koristi sintetičke podatke na desktopu i 390px.
+
+> Unos krova, 12. novembar 2026: forma za dodavanje/uređivanje krovne plohe sada koristi
+> osam strana svijeta (N/NE/E/SE/S/SW/W/NW → 0/45/90/135/180/225/270/315°) i tri SVG
+> izbora nagiba: Flat roof 3°, Gentle slope 20°, Steep slope 40°. Nagibi su jasno označene
+> procjene. Ranije sačuvane vrijednosti izvan ovih opcija ostaju zasebni odabrani izbori,
+> bez zaokruživanja; inicijalizacija forme i pozadinski refetch ne prepisuju korisnikov unos.
+> Dimenzije, oblici, geometrija, backend API, baza i proračuni nisu mijenjani. Postojeća
+> konverzija geografskog azimuta u PVGIS aspect ostaje isključivo na backendu; trenutni
+> model nema zaseban montažni nagib panela. Provjere: 56 frontend testova, build i 49
+> ciljanih backend testova prolaze; vizuelni QA na desktopu i 390px koristi sintetičke podatke.
+
+> Dopuna 12. novembra 2026: implementirane su USER/ADMIN uloge, admin katalog panela,
+> upravljanje aktivnošću naloga i dashboard. Migracija `0009` čuva postojeće korisnike kao
+> aktivne USER naloge i dopunjava rasporede snapshot-om panela. Detalji, endpointi i postupak
+> dodjele prve ADMIN uloge nalaze se u `docs/ADMIN.md`. Ranije tri ideje za nalog (potvrda
+> emaila, forgot password i delete account) odložene su na korisnikov zahtjev i nisu naredni
+> funkcionalni paket. Stariji planovi i navodi o jedinoj korisničkoj ulozi ispod ove dopune
+> predstavljaju prethodno stanje. Korisnikovi aplikacijski podaci nisu mijenjani tokom testova.
+
 > Stanje dokumentovano: 6. novembar 2026.
 > Grana: `main` (`origin/main`)
 > Posljednji objavljeni commit: `532ccae fix: preserve saved layouts and refine responsive workflows`. QA i responzivne ispravke su commitovane i pushane na `origin/main`; naknadno stanje provjeriti kroz `git status`.

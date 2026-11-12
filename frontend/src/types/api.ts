@@ -1,4 +1,7 @@
-export type User = { id: string; full_name: string; email: string; created_at: string; updated_at: string };
+export type User = { id: string; full_name: string; email: string; role: "USER" | "ADMIN"; is_active: boolean; created_at: string; updated_at: string };
+export type AdminUser = User & { project_count: number };
+export type AdminUsersPage = { items: AdminUser[]; total: number; offset: number; limit: number };
+export type AdminStats = { total_users: number; active_users: number; total_projects: number; panel_models: number };
 export type ProjectStatus = "draft" | "ready_for_analysis" | "analyzed";
 export type Project = { id: string; name: string; description: string | null; status: ProjectStatus; created_at: string; updated_at: string };
 export type ProjectInput = { name: string; description?: string | null };
@@ -37,7 +40,9 @@ export type SolarPanel = {
   efficiency_percent: number; cell_technology: string; temperature_coefficient_pmax: number;
   datasheet_url: string; bih_source_name: string; bih_source_url: string;
   verified_at: string; created_at: string; updated_at: string;
+  is_active?: boolean;
 };
+export type PanelInput = Omit<SolarPanel, "id" | "created_at" | "updated_at" | "is_active">;
 export type PanelOrientation = "portrait" | "landscape";
 export type LayoutInput = { solar_panel_id: string; orientation: PanelOrientation; panel_count?: number | null };
 export type PanelPosition = { index: number; row: number; column: number; x_m: number; y_m: number; width_m: number; length_m: number };

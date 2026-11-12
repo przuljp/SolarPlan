@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ArrowIcon } from "../components/Icons";
+import { RoofPositionFields } from "../components/RoofPositionFields";
+import { RoofShapeChoices } from "../components/RoofShapeChoices";
 import { api } from "../lib/api";
-import type { RoofSurfaceInput, RoofSurfaceShape } from "../types/api";
+import { ROOF_LAYOUT_DEFAULTS } from "../lib/roof-defaults";
+import type { RoofSurface, RoofSurfaceInput, RoofSurfaceShape } from "../types/api";
 
 type SurfaceForm = {
   name: string;
@@ -28,36 +31,53 @@ const empty: SurfaceForm = {
   length_m: "",
   tilt_deg: "",
   azimuth_deg: "",
-  edge_margin_m: "0.3",
-  panel_gap_m: "0.02",
+  edge_margin_m: String(ROOF_LAYOUT_DEFAULTS.edge_margin_m),
+  panel_gap_m: String(ROOF_LAYOUT_DEFAULTS.panel_gap_m),
 };
 
 export function RoofSurfaceFormPage() {
   const { projectId, surfaceId } = useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState<SurfaceForm>(empty);
   const existing = useQuery({
     queryKey: ["projects", projectId, "roof-surfaces", surfaceId],
     queryFn: () => api.roofSurface(projectId!, surfaceId!),
     enabled: Boolean(surfaceId),
   });
 
-  useEffect(() => {
-    if (!existing.data) return;
-    setForm({
-      name: existing.data.name,
-      shape_type: existing.data.shape_type,
-      bottom_width_m: String(existing.data.bottom_width_m),
-      top_width_m: String(existing.data.top_width_m),
-      top_offset_m: String(existing.data.top_offset_m),
-      length_m: String(existing.data.length_m),
-      tilt_deg: String(existing.data.tilt_deg),
-      azimuth_deg: String(existing.data.azimuth_deg),
-      edge_margin_m: String(existing.data.edge_margin_m),
-      panel_gap_m: String(existing.data.panel_gap_m),
-    });
-  }, [existing.data]);
+  if (surfaceId && existing.isPending) return <main className="workspace-page"><p role="status">Loading roof surface…</p></main>;
+  if (surfaceId && existing.isError) return <main className="workspace-page"><div className="query-error" role="alert"><strong>The roof surface could not be loaded.</strong><button className="button button-secondary" onClick={() => existing.refetch()}>Try again</button><Link to={`/projects/${projectId}/roof-surfaces`}>Return to roof surfaces</Link></div></main>;
+  return <RoofSurfaceEditor key={`${projectId}/${surfaceId ?? "new"}`} existing={surfaceId ? existing.data : undefined} />;
+}
+
+function RoofSurfaceEditor({ existing }: { existing?: RoofSurface }) {
+  const { projectId, surfaceId } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  // Initialize once per surface; background refetches must not overwrite an explicit choice.
+  const [form, setForm] = useState<SurfaceForm>(() => existing ? {
+    name: existing.name,
+    shape_type: existing.shape_type,
+    bottom_width_m: String(existing.bottom_width_m),
+    top_width_m: String(existing.top_width_m),
+    top_offset_m: String(existing.top_offset_m),
+    length_m: String(existing.length_m),
+    tilt_deg: String(existing.tilt_deg),
+    azimuth_deg: String(existing.azimuth_deg),
+    edge_margin_m: String(existing.edge_margin_m),
+    panel_gap_m: String(existing.panel_gap_m),
+  } : empty);
+  const [savedPosition] = useState(() => existing ? { azimuth: existing.azimuth_deg, tilt: existing.tilt_deg } : undefined);
+  const [savedGeometry] = useState(() => existing?.shape_type === "trapezoid" ? {
+    bottom: existing.bottom_width_m,
+    top: existing.top_width_m,
+    offset: existing.top_offset_m,
+    asymmetric: Math.abs(existing.top_offset_m - (existing.bottom_width_m - existing.top_width_m) / 2) > 1e-9,
+  } : undefined);
+  const isTrapezoid = form.shape_type === "trapezoid";
+  const showSavedOffset = isTrapezoid && savedGeometry?.asymmetric === true;
+  const sameSavedWidths = savedGeometry && Number(form.bottom_width_m) === savedGeometry.bottom && Number(form.top_width_m) === savedGeometry.top;
+  const topOffset = showSavedOffset ? Number(form.top_offset_m)
+    : sameSavedWidths ? savedGeometry.offset
+    : (Number(form.bottom_width_m) - Number(form.top_width_m)) / 2;
 
   const save = useMutation({
     mutationFn: (input: RoofSurfaceInput) => surfaceId
@@ -70,24 +90,12 @@ export function RoofSurfaceFormPage() {
   });
 
   function setShape(shape_type: RoofSurfaceShape) {
-    setForm((current) => ({
-      ...current,
-      shape_type,
-      top_width_m: shape_type === "rectangle" ? current.bottom_width_m : current.top_width_m,
-      top_offset_m: shape_type === "rectangle" ? "0" : current.top_offset_m,
-    }));
+    setForm((current) => ({ ...current, shape_type }));
   }
 
-  function centerTopEdge() {
-    const bottom = Number(form.bottom_width_m);
-    const top = Number(form.top_width_m);
-    if (Number.isFinite(bottom) && Number.isFinite(top) && bottom >= top) {
-      setForm((current) => ({ ...current, top_offset_m: String((bottom - top) / 2) }));
-    }
-  }
-
-  function submit(event: FormEvent) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!event.currentTarget.checkValidity()) return;
     const input: RoofSurfaceInput = {
       name: form.name,
       shape_type: form.shape_type,
@@ -95,7 +103,7 @@ export function RoofSurfaceFormPage() {
       top_width_m: form.shape_type === "trapezoid"
         ? Number(form.top_width_m)
         : Number(form.bottom_width_m),
-      top_offset_m: form.shape_type === "trapezoid" ? Number(form.top_offset_m) : 0,
+      top_offset_m: isTrapezoid ? topOffset : 0,
       length_m: Number(form.length_m),
       tilt_deg: Number(form.tilt_deg),
       azimuth_deg: Number(form.azimuth_deg),
@@ -105,7 +113,6 @@ export function RoofSurfaceFormPage() {
     save.mutate(input);
   }
 
-  const isTrapezoid = form.shape_type === "trapezoid";
   return (
     <main className="workspace-page narrow-page">
       <Link className="back-link" to={`/projects/${projectId}/roof-surfaces`}>← All roof surfaces</Link>
@@ -115,7 +122,7 @@ export function RoofSurfaceFormPage() {
       </header>
 
       <form className="roof-form" onSubmit={submit}>
-        {save.isError && <div className="form-error">{save.error instanceof Error ? save.error.message : "Surface could not be saved."}</div>}
+        {save.isError && <div className="form-error" role="alert">{save.error instanceof Error ? save.error.message : "Surface could not be saved."}</div>}
 
         <fieldset className="form-section">
           <legend>Surface identity</legend>
@@ -125,78 +132,48 @@ export function RoofSurfaceFormPage() {
         </fieldset>
 
         <fieldset className="form-section">
-          <legend>Surface geometry</legend>
-          <div className="shape-options" aria-label="Surface shape">
-            <label className={form.shape_type === "rectangle" ? "is-selected" : ""}>
-              <input type="radio" name="shape" checked={form.shape_type === "rectangle"} onChange={() => setShape("rectangle")} />
-              <span><strong>Rectangle</strong><small>Equal width at the ridge and eave</small></span>
-            </label>
-            <label className={form.shape_type === "trapezoid" ? "is-selected" : ""}>
-              <input type="radio" name="shape" checked={form.shape_type === "trapezoid"} onChange={() => setShape("trapezoid")} />
-              <span><strong>Trapezoid</strong><small>Narrower edge near the ridge</small></span>
-            </label>
-          </div>
+          <legend>Roof Surface Dimensions</legend>
+          <RoofShapeChoices shape={form.shape_type} onChange={setShape} />
 
           {isTrapezoid ? (
             <>
               <div className="field-grid">
                 <label>Bottom width <span className="field-unit">m</span>
-                  <input type="number" min="0.01" step="any" value={form.bottom_width_m} onChange={(event) => setForm({ ...form, bottom_width_m: event.target.value })} required />
+                  <input type="number" min="0.01" step="any" placeholder="e.g. 10" value={form.bottom_width_m} onChange={(event) => setForm({ ...form, bottom_width_m: event.target.value })} required />
                 </label>
                 <label>Top width <span className="field-unit">m</span>
-                  <input type="number" min="0.01" step="any" value={form.top_width_m} onChange={(event) => setForm({ ...form, top_width_m: event.target.value })} required />
+                  <input type="number" min="0.01" step="any" max={form.bottom_width_m || undefined} placeholder="e.g. 6" value={form.top_width_m} onChange={(event) => setForm({ ...form, top_width_m: event.target.value })} required />
                 </label>
-              </div>
-              <div className="field-grid">
-                <label>Top edge offset <span className="field-unit">m</span>
-                  <input type="number" min="0" step="any" value={form.top_offset_m} onChange={(event) => setForm({ ...form, top_offset_m: event.target.value })} required />
-                  <small>Horizontal distance from the bottom-left corner to the top-left corner.</small>
-                </label>
-                <div className="geometry-assist">
-                  <strong>Symmetric roof plane?</strong>
-                  <p>Center the shorter top edge automatically.</p>
-                  <button className="text-link" type="button" onClick={centerTopEdge}>Center top edge</button>
-                </div>
               </div>
             </>
           ) : (
             <div className="field-grid">
               <label>Surface width <span className="field-unit">m</span>
-                <input type="number" min="0.01" step="any" value={form.bottom_width_m} onChange={(event) => setForm({ ...form, bottom_width_m: event.target.value, top_width_m: event.target.value })} required />
+                <input type="number" min="0.01" step="any" placeholder="e.g. 8" value={form.bottom_width_m} onChange={(event) => setForm({ ...form, bottom_width_m: event.target.value, top_width_m: event.target.value })} required />
               </label>
               <label>Surface length <span className="field-unit">m</span>
-                <input type="number" min="0.01" step="any" value={form.length_m} onChange={(event) => setForm({ ...form, length_m: event.target.value })} required />
+                <input type="number" min="0.01" step="any" placeholder="e.g. 6" value={form.length_m} onChange={(event) => setForm({ ...form, length_m: event.target.value })} required />
               </label>
             </div>
           )}
 
           {isTrapezoid && (
             <label>Surface length <span className="field-unit">m</span>
-              <input type="number" min="0.01" step="any" value={form.length_m} onChange={(event) => setForm({ ...form, length_m: event.target.value })} required />
+              <input type="number" min="0.01" step="any" placeholder="e.g. 6" value={form.length_m} onChange={(event) => setForm({ ...form, length_m: event.target.value })} required />
             </label>
           )}
-
-          <div className="field-grid">
-            <label>Roof tilt <span className="field-unit">degrees</span>
-              <input type="number" min="0" max="90" step="any" value={form.tilt_deg} onChange={(event) => setForm({ ...form, tilt_deg: event.target.value })} required />
-            </label>
-            <label>Compass azimuth <span className="field-unit">degrees</span>
-              <input type="number" min="0" max="359.999" step="any" value={form.azimuth_deg} onChange={(event) => setForm({ ...form, azimuth_deg: event.target.value })} required />
-            </label>
-          </div>
+          <p className="section-copy geometry-measure-note">Measure the actual roof surface along its slope, not the dimensions of the entire house.</p>
+          {showSavedOffset && <label className="saved-geometry-offset">Saved top edge offset <span className="field-unit">m</span>
+            <input type="number" min="0" max={Number(form.bottom_width_m) - Number(form.top_width_m)} step="any" value={form.top_offset_m} onChange={(event) => setForm({ ...form, top_offset_m: event.target.value })} required />
+            <small>This saved surface is asymmetric. Its offset is kept unless you edit it; changing other fields will not center it.</small>
+          </label>}
+          <p className="geometry-layout-note">{surfaceId ? "Saved layout spacing is preserved." : "Layout spacing is set automatically."} Edge margin: {form.edge_margin_m} m; panel gap: {form.panel_gap_m} m. These are preliminary planning assumptions, not universal safety standards.</p>
         </fieldset>
 
-        <fieldset className="form-section">
-          <legend>Layout clearances</legend>
-          <div className="field-grid">
-            <label>Edge margin <span className="field-unit">m</span>
-              <input type="number" min="0" step="any" value={form.edge_margin_m} onChange={(event) => setForm({ ...form, edge_margin_m: event.target.value })} required />
-            </label>
-            <label>Panel gap <span className="field-unit">m</span>
-              <input type="number" min="0" step="any" value={form.panel_gap_m} onChange={(event) => setForm({ ...form, panel_gap_m: event.target.value })} required />
-            </label>
-          </div>
-        </fieldset>
+        <RoofPositionFields azimuth={form.azimuth_deg} tilt={form.tilt_deg}
+          savedAzimuth={savedPosition?.azimuth} savedTilt={savedPosition?.tilt}
+          onAzimuthChange={(azimuth_deg) => setForm((current) => ({ ...current, azimuth_deg }))}
+          onTiltChange={(tilt_deg) => setForm((current) => ({ ...current, tilt_deg }))} />
 
         <div className="form-actions">
           <Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces`}>Cancel</Link>

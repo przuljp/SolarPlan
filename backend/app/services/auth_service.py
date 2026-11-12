@@ -17,6 +17,8 @@ async def register_user(session: AsyncSession, data: RegisterRequest) -> User:
         full_name=data.full_name,
         email=data.email,
         password_hash=hash_password(data.password),
+        role="USER",
+        is_active=True,
     )
     user_repository.add(session, user)
 
@@ -35,7 +37,7 @@ async def authenticate_user(session: AsyncSession, data: LoginRequest) -> User:
     encoded_hash = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
     password_is_valid = verify_password(data.password, encoded_hash)
 
-    if user is None or not password_is_valid:
+    if user is None or not password_is_valid or not user.is_active:
         raise InvalidCredentialsError
 
     return user

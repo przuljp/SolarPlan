@@ -33,7 +33,7 @@ export function PanelLayoutPage() {
       solar_panel_id: panelId!,
       orientation,
     }),
-    enabled: Boolean(projectId && surfaceId && panelId && surface.isSuccess),
+    enabled: Boolean(projectId && surfaceId && panelId && surface.isSuccess && savedLayout?.solar_panel?.is_active !== false),
   });
 
   const effectiveCount = Math.max(0, Math.min(
@@ -56,6 +56,7 @@ export function PanelLayoutPage() {
     return <main className="workspace-page"><div className="query-error"><div><strong>No panel has been selected.</strong><p>Choose a module before calculating the layout.</p></div><Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces/${surfaceId}/panels`}>Choose panel</Link></div></main>;
   }
   if (surface.isError) return <main className="workspace-page"><div className="query-error" role="alert"><strong>The saved roof layout could not be loaded.</strong><button className="button button-secondary" onClick={() => surface.refetch()}>Try again</button></div></main>;
+  if (savedLayout?.solar_panel?.is_active === false) return <main className="workspace-page"><Link className="back-link" to={`/projects/${projectId}/roof-surfaces`}>← Roof surfaces</Link><header className="workspace-heading"><div><h1>Saved panel layout</h1><p>{savedLayout.solar_panel.model_sku} · {savedLayout.panel_count} panels · {savedLayout.installed_kwp} kWp</p></div></header><section className="content-panel"><h2>This model is inactive</h2><p>Your saved layout and energy results are preserved. This model cannot be used for new or changed layouts.</p><Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces`}>View saved roof surfaces</Link></section></main>;
   if (surface.isPending || preview.isPending) return <main className="workspace-page"><div className="form-page-skeleton" /></main>;
   if (preview.isError) return <main className="workspace-page"><div className="query-error"><strong>Layout could not be calculated.</strong><Link className="button button-secondary" to={`/projects/${projectId}/roof-surfaces/${surfaceId}/panels`}>Back to catalog</Link></div></main>;
 

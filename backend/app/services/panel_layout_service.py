@@ -12,6 +12,7 @@ from app.models.panel_layout import PanelLayout
 from app.models.solar_panel import SolarPanel
 from app.repositories import panel_layout_repository, solar_panel_repository
 from app.schemas.panel_layout import LayoutRequest
+from app.schemas.solar_panel import SolarPanelRead
 from app.services import layout_engine, roof_surface_service
 
 
@@ -38,6 +39,11 @@ async def preview_layout(
     surface = await roof_surface_service.get_surface(session, project_id, surface_id, owner_id)
     await require_common_panel(session, project_id, data.solar_panel_id)
     panel = await get_panel(session, data.solar_panel_id)
+    if panel.is_active is False:
+        raise SolarPanelNotFoundError
+    existing = await panel_layout_repository.get_by_surface_id(session, surface_id)
+    if existing is not None and existing.solar_panel_id == panel.id:
+        panel = saved_panel(existing)
     try:
         calculation = layout_engine.calculate_layout(
             surface, panel, data.orientation, data.panel_count
@@ -64,6 +70,9 @@ async def save_layout(
     layout = await panel_layout_repository.get_by_surface_id(session, surface_id)
     values = {
         "solar_panel_id": data.solar_panel_id,
+        "panel_snapshot": SolarPanelRead.model_validate(preview["solar_panel"]).model_dump(
+            mode="json"
+        ),
         "orientation": preview["orientation"],
         "rows": preview["rows"],
         "columns": preview["columns"],
@@ -86,9 +95,10 @@ async def save_layout(
 
 
 def saved_layout_response(layout: PanelLayout, surface) -> dict:
+    panel = saved_panel(layout)
     calculation = layout_engine.calculate_layout(
         surface,
-        layout.solar_panel,
+        panel,
         layout.orientation,
         layout.panel_count,
     )
@@ -97,8 +107,20 @@ def saved_layout_response(layout: PanelLayout, surface) -> dict:
         "project_id": layout.project_id,
         "roof_surface_id": layout.roof_surface_id,
         "solar_panel_id": layout.solar_panel_id,
-        "solar_panel": layout.solar_panel,
+        "solar_panel": panel,
         **calculation,
         "created_at": layout.created_at,
         "updated_at": layout.updated_at,
     }
+
+
+def saved_panel(layout: PanelLayout):
+    snapshot = getattr(layout, "panel_snapshot", None)
+    if snapshot:
+        return SolarPanelRead.model_validate(
+            {
+                **snapshot,
+                "is_active": layout.solar_panel.is_active,
+            }
+        )
+    return layout.solar_panel
